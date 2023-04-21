@@ -6,14 +6,25 @@ int main(int argc, char ** argv) {
         return 1;
     }
 
+    int id = atoi(argv[1]);
+
+
     // register signal handler
 
     // connect to named pipes
     
-    // event loop:
 
-    // wait for exchange update (MARKET message)
-    // send order
-    // wait for exchange confirmation (ACCEPTED message)
+    /* 
+    Event loop: 
+
+    wait for exchange update (MARKET message)
+    send order
+    wait for exchange confirmation (ACCEPTED message)
+    
+    */
+
+    while(1) {
+        pause();
+    }
     
 }
