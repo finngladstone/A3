@@ -1,8 +1,12 @@
 #include "pe_trader.h"
 
 void signal_handler(int s, siginfo_t* sinfo, void * context) {
-    
+
 }
+
+void write_data(int fd, char * message) {}
+
+void read_data(int fd, char * buffer) {}
 
 // int place_order() {}
 
@@ -12,19 +16,22 @@ int main(int argc, char ** argv) {
         return 1;
     }
 
-    pid_t exchange_pid = getppid();
+    char buffer[BUFFER_SIZE];
 
-    struct sigaction s = {0};
-    s.sa_flags |= SA_SIGINFO;
-
+    int fd_write;
+    int fd_read;
 
     // connect to named pipes
-
-    int fd_write = open(FIFO_TRADER, O_WRONLY);
-    int fd_read = open(FIFO_EXCHANGE, O_RDONLY);
+    if ((fd_write = open(FIFO_TRADER, O_WRONLY)) == -1) 
+        perror("Failed to open FIFO_TRADER");
     
-
-    /* Collect MARKET OPEN */
+    if ((fd_read = open(FIFO_EXCHANGE, O_RDONLY)) == -1) 
+        perror("Failed to open EXCHANGE_FIFO");
+    
+    /* Collect MARKET OPEN 
+    - read and check message
+    - if valid, proceed to main loop
+    */
 
     pause();
 
@@ -40,5 +47,8 @@ int main(int argc, char ** argv) {
     while(1) {
     
     }
+
+    close(fd_read);
+    close(fd_write);
     
 }
