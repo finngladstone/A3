@@ -8,7 +8,11 @@ void signal_handler(int s, siginfo_t* sinfo, void * context) {
 void signal_h(int s) {}
 
 void write_data(int fd, char * message) {
-
+    int success;
+    
+    if ((success == write(fd, message, strlen(message) + 1)) == -1) {
+        perror("write_data shit the bed");
+    }
 }
 
 void read_data(int fd, char * buffer) {
