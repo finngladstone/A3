@@ -3,7 +3,7 @@
 
 #include "pe_common.h"
 
-#define BUFFER_SIZE 50
+#define BUFFER_SIZE 128
 #define PATH_LEN 25
 
 #endif
