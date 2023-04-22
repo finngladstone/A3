@@ -5,6 +5,8 @@ void signal_handler(int s, siginfo_t* sinfo, void * context) {
         printf("Trader received SIGUSR1 signal\n");
 }
 
+void signal_h(int s) {}
+
 void write_data(int fd, char * message) {}
 
 void read_data(int fd, char * buffer) {
@@ -27,6 +29,9 @@ int main(int argc, char ** argv) {
 
     char buffer[BUFFER_SIZE];
 
+    struct sigaction s = { 0 };
+    s.sa_flags |= SA_SIGINFO; // what even the fuck does this do
+
     int fd_write;
     int fd_read;
 
@@ -37,7 +42,10 @@ int main(int argc, char ** argv) {
     if ((fd_read = open(FIFO_EXCHANGE, O_RDONLY)) == -1) 
         perror("Failed to open EXCHANGE_FIFO");
 
-    // signal(SIGUSR1, signal_handler); deprecated?
+    // non deprecated signal handling
+
+    s.sa_sigaction = signal_handler;
+    signal(SIGUSR1, signal_h);
     
     /* Collect MARKET OPEN 
     - read and check message
