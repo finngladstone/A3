@@ -28,6 +28,16 @@ void read_data(int fd, char * buffer) {
     return;
 }
 
+void parse_order(struct market_data * storage, char * input) {
+    int n_read;
+    n_read = sscanf(input, "MARKET SELL %127s %d %f;", storage->name, storage->quantity, storage->price);
+
+    if (n_read != 3) {
+        printf("parse_order fried\n");
+        exit(2);
+    }
+}
+
 // int place_order() {}
 
 int main(int argc, char ** argv) {
@@ -39,6 +49,10 @@ int main(int argc, char ** argv) {
     /* General setup */
     int self_id = atoi(argv[1]);
     char buffer[BUFFER_SIZE] = {0};
+    int order_id = 0;
+    
+    regex_t check_sell;
+
 
 
     /* FIFO filename setup */
@@ -90,6 +104,30 @@ int main(int argc, char ** argv) {
         pause();
 
         read_data(fd_read, buffer);
+        
+        if (strncmp(buffer, "MARKET SELL", 11) != 0) 
+            continue;
+        
+        regcomp(&check_sell, SELL_SYNTAX, REG_EXTENDED);
+
+        int valid = regexec(&check_sell, buffer, 0, NULL, 0);
+        regfree(&check_sell);
+
+        if (!valid) 
+            continue;
+
+        struct market_data storage; 
+        parse_order(&storage, buffer);
+
+        if (storage.quantity >= 1000) {
+            break;
+        } else {
+            char reval[BUFFER_SIZE];
+            snprintf(reval, BUFFER_SIZE, BUY_ORDER, order_id, storage.name, storage.quantity, storage.price);
+
+            write_data(fd_write, reval);
+            order_id++;
+        }
     }
 
     
