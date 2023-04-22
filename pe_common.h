@@ -12,6 +12,9 @@
 #include <sys/types.h>
 #include <sys/stat.h>
 
+#include <unistd.h>
+#include <sys/wait.h>
+
 #define FIFO_EXCHANGE "/tmp/pe_exchange_%d"
 #define FIFO_TRADER "/tmp/pe_trader_%d"
 #define FEE_PERCENTAGE 1
