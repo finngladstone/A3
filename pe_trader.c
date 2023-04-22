@@ -6,7 +6,15 @@ void signal_handler(int s, siginfo_t* sinfo, void * context) {
 
 void write_data(int fd, char * message) {}
 
-void read_data(int fd, char * buffer) {}
+void read_data(int fd, char * buffer) {
+    ssize_t n_read;
+    if ((n_read = read(fd, *buffer, BUFFER_SIZE-1)) == 1) {
+        perror("read_data fail");
+        exit(2);
+    }
+
+    buffer[n_read] = '\0';
+}
 
 // int place_order() {}
 
@@ -34,6 +42,7 @@ int main(int argc, char ** argv) {
     */
 
     pause();
+    read_data(fd_read, *buffer);
 
     /* 
     Event loop: 
