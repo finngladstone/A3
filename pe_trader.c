@@ -7,10 +7,11 @@ void signal_handler(int s, siginfo_t* sinfo, void * context) {
 
 void signal_h(int s) {}
 
-void write_data(int fd, char * message) {}
+void write_data(int fd, char * message) {
 
-char * read_data(int fd) { // malloc !
-    char buffer[BUFFER_SIZE];
+}
+
+void read_data(int fd, char * buffer) {
     ssize_t n_read;
 
     if ((n_read = read(fd, buffer, BUFFER_SIZE-1)) == 1) {
@@ -19,10 +20,8 @@ char * read_data(int fd) { // malloc !
     }
 
     buffer[n_read] = '\0';
-    char * msg = (char*)malloc(sizeof(char)*(n_read + 1));
-    strcpy(msg, buffer);
 
-    return msg;
+    return;
 }
 
 // int place_order() {}
@@ -33,7 +32,10 @@ int main(int argc, char ** argv) {
         return 1;
     }
 
+    /* General setup */
     int self_id = atoi(argv[1]);
+    char buffer[BUFFER_SIZE] = {0};
+
 
     /* FIFO filename setup */
 
@@ -62,23 +64,14 @@ int main(int argc, char ** argv) {
     s.sa_sigaction = signal_handler;
     signal(SIGUSR1, signal_h);
     
-    /* Collect MARKET OPEN 
-    - read and check message
-    - if valid, proceed to main loop
-    */
+    /* Collect MARKET OPEN; */
 
     pause();
-    char * reval = read_data(fd_read);
-    printf("Trader receives %s\n", reval);
-    
-    free(reval);
-
-
-    // if (strcmp(buffer, "MARKET OPEN") == 0) {
-    //     printf("T[] Received MARKET OPENED.. proceeding\n");
-    // } else {
-    //     perror("Unexpected token");
-    // }
+    read_data(fd_read, buffer);
+    if (strcmp(buffer, "MARKET OPEN;") != 0) {
+        printf("T[%d] expected 'MARKET OPEN;', received %s\n", self_id, buffer);
+        exit(1);
+    }
 
     /* 
     Event loop: 
@@ -89,9 +82,11 @@ int main(int argc, char ** argv) {
     
     */
 
-    // while(1) {
-    
-    // }
+    while(1) {
+        pause();
+
+        read_data(fd_read, buffer);
+    }
 
     
     /* End of program cycle */
