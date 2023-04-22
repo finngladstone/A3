@@ -10,7 +10,8 @@
 #define BUY_ORDER "BUY %i %s %i %i;"
 
 /* regex */
-#define SELL_SYNTAX "^MARKET SELL ([a-zA-Z]+) (\d+) (\d+);$"
+#define SELL_SYNTAX "^MARKET SELL ([[:alpha:]]+) ([[:digit:]]+) ([[:digit:]]+);$"
+
 // #define SELL_SYNTAX "^MARKET SELL ([a-zA-Z]+) (-?\d+) (-?\d+);$"
 
 struct market_data {

@@ -8,9 +8,8 @@ void signal_handler(int s, siginfo_t* sinfo, void * context) {
 void signal_h(int s) {}
 
 void write_data(int fd, char * message) {
-    int success;
     
-    if ((success == write(fd, message, strlen(message) + 1)) == -1) {
+    if ((write(fd, message, strlen(message) + 1)) == -1) {
         perror("write_data shit the bed");
     }
 }
@@ -30,7 +29,7 @@ void read_data(int fd, char * buffer) {
 
 void parse_order(struct market_data * storage, char * input) {
     int n_read;
-    n_read = sscanf(input, "MARKET SELL %127s %d %f;", storage->name, storage->quantity, storage->price);
+    n_read = sscanf(input, "MARKET SELL %127s %i %i;", storage->name, &storage->quantity, &storage->price);
 
     if (n_read != 3) {
         printf("parse_order fried\n");
@@ -122,8 +121,8 @@ int main(int argc, char ** argv) {
         if (storage.quantity >= 1000) {
             break;
         } else {
-            char reval[BUFFER_SIZE];
-            snprintf(reval, BUFFER_SIZE, BUY_ORDER, order_id, storage.name, storage.quantity, storage.price);
+            char reval[256];
+            snprintf(reval, 256, BUY_ORDER, order_id, storage.name, storage.quantity, storage.price);
 
             write_data(fd_write, reval);
             order_id++;
