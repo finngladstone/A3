@@ -4,7 +4,7 @@ void handler(int s, siginfo_t* sinfo, void * context) {
 
 }
 
-int place_order() {}
+// int place_order() {}
 
 int main(int argc, char ** argv) {
     if (argc < 2) {
