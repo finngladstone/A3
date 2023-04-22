@@ -27,6 +27,16 @@ int main(int argc, char ** argv) {
         return 1;
     }
 
+    int self_id = atoi(argv[1]);
+
+    /* FIFO filename setup */
+
+    char read_path[PATH_LEN];
+    char write_path[PATH_LEN];
+
+    snprintf(read_path, PATH_LEN, FIFO_EXCHANGE, self_id);
+    snprintf(write_path, PATH_LEN, FIFO_TRADER, self_id);
+
     char buffer[BUFFER_SIZE];
 
     struct sigaction s = { 0 };
@@ -35,14 +45,15 @@ int main(int argc, char ** argv) {
     int fd_write;
     int fd_read;
 
-    // connect to named pipes
-    if ((fd_write = open(FIFO_TRADER, O_WRONLY)) == -1) 
-        perror("Failed to open FIFO_TRADER");
-    
-    if ((fd_read = open(FIFO_EXCHANGE, O_RDONLY)) == -1) 
+    /* Setup and handle potential read errors for FIFO pipes*/
+
+    if ((fd_read = open(read_path, O_RDONLY)) == -1) 
         perror("Failed to open EXCHANGE_FIFO");
 
-    // non deprecated signal handling
+    if ((fd_write = open(write_path, O_WRONLY)) == -1) 
+        perror("Failed to open FIFO_TRADER");
+    
+    /* Setup signal handling */
 
     s.sa_sigaction = signal_handler;
     signal(SIGUSR1, signal_h);
@@ -70,11 +81,16 @@ int main(int argc, char ** argv) {
     
     */
 
-    while(1) {
+    // while(1) {
     
-    }
+    // }
+
+    
+    /* End of program cycle */
 
     close(fd_read);
     close(fd_write);
+
+    return 0;
     
 }
