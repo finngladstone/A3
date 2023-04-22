@@ -1,7 +1,7 @@
 #include "pe_trader.h"
 
-void handler(int s, siginfo_t* sinfo, void * context) {
-
+void signal_handler(int s, siginfo_t* sinfo, void * context) {
+    
 }
 
 // int place_order() {}
@@ -11,6 +11,8 @@ int main(int argc, char ** argv) {
         printf("Not enough arguments\n");
         return 1;
     }
+
+    pid_t exchange_pid = getppid();
 
     struct sigaction s = {0};
     s.sa_flags |= SA_SIGINFO;
@@ -22,6 +24,10 @@ int main(int argc, char ** argv) {
     int fd_read = open(FIFO_EXCHANGE, O_RDONLY);
     
 
+    /* Collect MARKET OPEN */
+
+    pause();
+
     /* 
     Event loop: 
 
@@ -32,7 +38,7 @@ int main(int argc, char ** argv) {
     */
 
     while(1) {
-        pause();
+    
     }
     
 }
