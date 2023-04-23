@@ -51,10 +51,6 @@ int main(int argc, char ** argv) {
 
     char buffer[BUFFER_SIZE] = {0};
     int order_id = 0;
-    
-    regex_t check_sell;
-
-
 
     /* FIFO filename setup */
 
@@ -104,26 +100,12 @@ int main(int argc, char ** argv) {
     
     */
 
-//    pause();
-//    read_data(fd_read, buffer);
-
-//    write_data(fd_write, "hello world");
-//    kill(parent_id, SIGUSR1);
-
     while(1) {
         pause();
 
         read_data(fd_read, buffer);
         
         if (strncmp(buffer, "MARKET SELL", 11) != 0) 
-            continue;
-        
-        regcomp(&check_sell, SELL_SYNTAX, REG_EXTENDED);
-
-        int valid = regexec(&check_sell, buffer, 0, NULL, 0);
-        regfree(&check_sell);
-
-        if (!valid) 
             continue;
 
         struct market_data storage; 
@@ -140,10 +122,9 @@ int main(int argc, char ** argv) {
         }
 
         kill(parent_id, SIGUSR1);
-        sleep(1);
     }
 
-    
+
     /* End of program cycle */
 
     close(fd_read);
