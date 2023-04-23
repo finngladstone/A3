@@ -9,7 +9,7 @@ void signal_h(int s) {}
 
 void write_data(int fd, char * message) {
     
-    if ((write(fd, message, strlen(message) + 1)) == -1) {
+    if ((write(fd, message, strlen(message))) == -1) {
         perror("write_data shit the bed");
     }
 }
@@ -47,6 +47,8 @@ int main(int argc, char ** argv) {
 
     /* General setup */
     int self_id = atoi(argv[1]);
+    int parent_id = getppid();
+
     char buffer[BUFFER_SIZE] = {0};
     int order_id = 0;
     
@@ -87,6 +89,9 @@ int main(int argc, char ** argv) {
     read_data(fd_read, buffer);
     if (strcmp(buffer, "MARKET OPEN;") != 0) {
         printf("T[%d] expected 'MARKET OPEN;', received %s\n", self_id, buffer);
+        close(fd_read);
+        close(fd_write);
+        
         exit(1);
     }
 
@@ -98,6 +103,12 @@ int main(int argc, char ** argv) {
     wait for exchange confirmation (ACCEPTED message)
     
     */
+
+//    pause();
+//    read_data(fd_read, buffer);
+
+//    write_data(fd_write, "hello world");
+//    kill(parent_id, SIGUSR1);
 
     while(1) {
         pause();
@@ -127,6 +138,9 @@ int main(int argc, char ** argv) {
             write_data(fd_write, reval);
             order_id++;
         }
+
+        kill(parent_id, SIGUSR1);
+        sleep(1);
     }
 
     
