@@ -1,5 +1,12 @@
 #include "pe_exchange.h"
 
+void setup_pipes(int argc, char const *argv[]) {
+    /* 
+     * Connect each trader to a named pipe (FIFO)
+     * Can epoll help here?
+     */
+}
+
 int main(int argc, char const *argv[])
 {
     
