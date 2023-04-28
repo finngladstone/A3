@@ -2,9 +2,29 @@
 
 void setup_pipes(int argc, char const *argv[]) {
     /* 
-     * Connect each trader to a named pipe (FIFO)
-     * Can epoll help here?
+     * Setup FIFO path for exchange
+     * Create fifo pipes for traders
+     * Can epoll help here? -> maybe in main
      */
+    char fifo_path[PATH_LEN] = {0};
+    int trader_id;
+
+    for (int i = 2; i < argc; i++) { // iterate through trader args
+        
+        trader_id = i - 2;
+        snprintf(fifo_path, PATH_LEN, FIFO_TRADER, trader_id);
+
+        if (mkfifo(fifo_path, 0666) == -1) {
+            perror("mkfifo failed");
+            exit(2);
+        }
+    }
+
+    // setup exchange fifo
+
+    
+
+
 }
 
 int main(int argc, char const *argv[])
