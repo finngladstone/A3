@@ -25,6 +25,12 @@ char** init_products(FILE * products, int n) {
         strcpy(product_arr[i], buffer);
     }
 
+    printf("[SPX] Trading %d products: ", n);
+
+    for (int i = 0; i < n; i++) {
+        printf("%s", product_arr[i]);
+    }
+
     return product_arr;
 }
 
@@ -70,6 +76,12 @@ void setup_pipes(int argc, char const *argv[]) {
 
 int main(int argc, char const *argv[])
 {
+
+    if (argc < 2) {
+        printf("Invalid launch options\n");
+        return 2;
+    }
+
     printf("[SPX] Starting\n"); // custom printf for [SPX] ?
     
    /* Start-up 
