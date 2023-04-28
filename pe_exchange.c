@@ -1,5 +1,43 @@
 #include "pe_exchange.h"
 
+// char** get_products(char * filename) {
+//     char** products;
+//     int n_products;
+
+//     FILE * file = fopen(filename, "r");
+//     if (file == NULL) {
+//         perror("Failed to read products list");
+//         exit(2);
+//     }
+
+//     fscanf(file, "%d\n", &n_products); // read product len
+//     products = (char **) malloc(n_products * sizeof(char *));
+
+//     for (int i = 0; i < n_products; i++) {
+//         char buffer[BUFFER_LEN];
+//         fgets(buffer, BUFFER_LEN, file);
+
+//         buffer[strcspn(buffer, "\n")] = '\0';
+
+//         products[i] = (char *) malloc(strlen(buffer) + 1);
+//         strcpy(products[i], buffer);
+//     }
+
+//     /* Verbose product reading */
+//     printf("[SPX] Trading %d products: ", n_products);
+//     for (int i = 0; i < n_products; i++) {
+//         printf("%s", products[i]);
+        
+//         if (i < n_products - 1) {
+//             printf(" ");
+//         }
+//     }
+
+//     printf("\n");
+
+//     return products;
+// }
+
 void setup_pipes(int argc, char const *argv[]) {
     /* 
      * Setup FIFO path for exchange
