@@ -1,42 +1,39 @@
 #include "pe_exchange.h"
 
-// char** get_products(char * filename) {
-//     char** products;
-//     int n_products;
+int get_n_products(FILE * products) {
+    int n;
+    if (fscanf(products, "%d\n", &n) != 1) {
+        perror("Failed to parse number of products");
+        exit(2);
+    }
 
-//     FILE * file = fopen(filename, "r");
-//     if (file == NULL) {
-//         perror("Failed to read products list");
-//         exit(2);
-//     }
+    return n;
+}
 
-//     fscanf(file, "%d\n", &n_products); // read product len
-//     products = (char **) malloc(n_products * sizeof(char *));
+char** init_products(FILE * products, int n) {
+    char** product_arr = (char **) malloc(n * sizeof(char *));
 
-//     for (int i = 0; i < n_products; i++) {
-//         char buffer[BUFFER_LEN];
-//         fgets(buffer, BUFFER_LEN, file);
+    for (int i = 0; i < n; i++) {
+        char buffer[BUFFER_LEN];
+        fgets(buffer, BUFFER_LEN, products);
 
-//         buffer[strcspn(buffer, "\n")] = '\0';
+         // Remove the newline character
+        buffer[strcspn(buffer, "\n")] = '\0';
 
-//         products[i] = (char *) malloc(strlen(buffer) + 1);
-//         strcpy(products[i], buffer);
-//     }
+        // Allocate memory for the product name
+        product_arr[i] = (char *)malloc(strlen(buffer) + 1);
+        strcpy(product_arr[i], buffer);
+    }
 
-//     /* Verbose product reading */
-//     printf("[SPX] Trading %d products: ", n_products);
-//     for (int i = 0; i < n_products; i++) {
-//         printf("%s", products[i]);
-        
-//         if (i < n_products - 1) {
-//             printf(" ");
-//         }
-//     }
+    return product_arr;
+}
 
-//     printf("\n");
-
-//     return products;
-// }
+void free_products(char **products, int n) {
+    for (int i = 0; i < n; i++) {
+        free(products[i]);
+    }
+    free(products);
+}
 
 void setup_pipes(int argc, char const *argv[]) {
     /* 
@@ -82,12 +79,32 @@ int main(int argc, char const *argv[])
     * 4. After launching each binary, exchange and trader connect to FIFO
     */
 
+    /* Setup product list */
+    char ** products;
+
+    FILE * product_fd = fopen(argv[1], "r");
+    if (product_fd == NULL) {
+        perror("Failed to open file");
+        return 2;
+    }
+
+    int n_products = get_n_products(product_fd);
+    products = init_products(product_fd, n_products);
+    
+    fclose(product_fd);
+
+        
+
    /* Endgame
     * - Print [SPX] Trader <Trader ID> disconnected
     * - Reject pending / concurrent orders, maintain existing
     * - [SPX] Trading completed
     * - [SPX] Exchange fees collected: $<total fees>
     */
+
+    /* Free memory */
+
+    free_products(products, n_products);
 
     return 0;
 }
