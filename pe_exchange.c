@@ -25,11 +25,8 @@ char** init_products(FILE * products, int n) {
         strcpy(product_arr[i], buffer);
     }
 
+    /* Status message */
     printf("[SPX] Trading %d products: ", n);
-
-    for (int i = 0; i < n; i++) {
-        printf("%s", product_arr[i]);
-    }
 
     return product_arr;
 }
