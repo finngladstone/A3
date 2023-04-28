@@ -3,6 +3,6 @@
 
 #include <pe_common.h>
 
-#define PATH_LEN 25
+#define PATH_LEN 50
 
 #endif 
