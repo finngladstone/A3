@@ -1,43 +1,5 @@
 #include "pe_exchange.h"
 
-int get_n_products(FILE * products) {
-    int n;
-    if (fscanf(products, "%d\n", &n) != 1) {
-        perror("Failed to parse number of products");
-        exit(2);
-    }
-
-    return n;
-}
-
-char** init_products(FILE * products, int n) {
-    char** product_arr = (char **) malloc(n * sizeof(char *));
-
-    for (int i = 0; i < n; i++) {
-        char buffer[BUFFER_LEN];
-        fgets(buffer, BUFFER_LEN, products);
-
-         // Remove the newline character
-        buffer[strcspn(buffer, "\n")] = '\0';
-
-        // Allocate memory for the product name
-        product_arr[i] = (char *)malloc(strlen(buffer) + 1);
-        strcpy(product_arr[i], buffer);
-    }
-
-    /* Status message */
-    printf("[SPX] Trading %d products: ", n);
-
-    return product_arr;
-}
-
-void free_products(char **products, int n) {
-    for (int i = 0; i < n; i++) {
-        free(products[i]);
-    }
-    free(products);
-}
-
 void setup_pipes(int argc, char const *argv[]) {
     /* 
      * Setup FIFO path for exchange
@@ -89,20 +51,7 @@ int main(int argc, char const *argv[])
     */
 
     /* Setup product list */
-    char ** products;
-
-    FILE * product_fd = fopen(argv[1], "r");
-    if (product_fd == NULL) {
-        perror("Failed to open file");
-        return 2;
-    }
-
-    int n_products = get_n_products(product_fd);
-    products = init_products(product_fd, n_products);
-    
-    fclose(product_fd);
-
-        
+  
 
    /* Endgame
     * - Print [SPX] Trader <Trader ID> disconnected
@@ -112,8 +61,6 @@ int main(int argc, char const *argv[])
     */
 
     /* Free memory */
-
-    free_products(products, n_products);
 
     return 0;
 }
