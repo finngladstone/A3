@@ -13,6 +13,12 @@ typedef struct node{
     char * data;
 } node;
 
+typedef struct trader {
+    int id;
+    int incoming;
+    int outgoing;
+} trader;
+
 node* list_init(char * input);
 
 node* list_next(node* n);
