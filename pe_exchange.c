@@ -1,5 +1,41 @@
 #include "pe_exchange.h"
 
+node* init_products(const char * filename) {
+    node* head = NULL;  
+
+    FILE * myfile = fopen(filename, "r");
+    int n;
+
+    if (fscanf(myfile, "%d\n", &n) != 1) {
+        perror("Failed to read number of products");
+        exit(2);
+    }
+
+    char buffer[BUFFER_LEN];
+
+    int i;
+    for (i = 0; i < n; i++) {
+        fgets(buffer, BUFFER_LEN, myfile);
+
+        buffer[strlen(buffer) - 1] = '\0';
+        list_add(&head, buffer);
+    }
+
+    printf("%s Trading %d products: ", LOG_PREFIX, i);
+
+    node* c = head;
+    while(c){
+        printf("%s",c->data);
+        c = c->next;
+    }
+
+    printf("\n");
+
+    // list_add(&head, "data");
+
+    return head;
+}
+
 void setup_pipes(int argc, char const *argv[]) {
     /* 
      * Setup FIFO path for exchange
@@ -41,7 +77,9 @@ int main(int argc, char const *argv[])
         return 2;
     }
 
-    printf("[SPX] Starting\n"); // custom printf for [SPX] ?
+    printf("%s Starting\n", LOG_PREFIX); // custom printf for [SPX] ?
+
+    node* products_ll = init_products(argv[1]);
     
    /* Start-up 
     * 1. Read product file 
@@ -61,6 +99,8 @@ int main(int argc, char const *argv[])
     */
 
     /* Free memory */
+
+    list_free(products_ll);
 
     return 0;
 }
