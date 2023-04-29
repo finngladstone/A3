@@ -27,6 +27,9 @@ build/
 !examples/*/*.*
 !examples/
 
+# ignore example code
+templates
+
 # useful docs on gitignore:
 # https://git-scm.com/docs/gitignore
 # https://www.atlassian.com/git/tutorials/saving-changes/gitignore

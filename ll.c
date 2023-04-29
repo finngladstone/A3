@@ -2,7 +2,7 @@
 
 /** USYD CODE CITATION ACKNOWLEDGEMENT
  * I declare that the following lines of code have been sourced 
- * from Richard McKenzie's Lab Solutions 
+ * from Richard McKenzie's lab solutions 
  * 
  * URL
  * https://edstem.org/au/courses/10466/workspaces/pXPFniggiFxocDNyTPzgNF2hw8mA00wk
