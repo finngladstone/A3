@@ -47,20 +47,47 @@ node* init_products(const char * filename) {
     return head;
 }
 
-void setup_pipes(int argc, char const *argv[]) {
-    /* 
-     * Setup FIFO path for exchange
-     * Create fifo pipes for traders
-     * Can epoll help here? -> maybe in main
-     */
+trader* get_traders(int argc, char const *argv[]) {
+    trader * traders = malloc((argc - 2) * sizeof(trader));
+
+    for (int i = 2; i < argc; i++) {
+        traders[i-2].id = i-2;
+        strcpy(traders[i-2].path, argv[i]);
+    }
+
+    return traders;
+}
+
+void launch(trader * t) {
+
+    // pid_t pid;
+
+    // pid = fork();
+    // if (pid == -1) {
+    //     perror("Fork() in init_traders failed");
+    //     exit(2);
+    // }
+
+    // if (pid == 0) {
+    //     exit(0);
+    // }
+
+    printf("%s Starting trader %d (%s)\n", LOG_PREFIX, t->id, t->path);
+    return;
+}
+
+void init_traders(trader * traders, int n) {  
     char fifo_path_trader[PATH_LEN] = {0};
     char fifo_path_exchange[PATH_LEN] = {0};
-
+    
     int trader_id;
 
-    for (int i = 2; i < argc; i++) { // iterate through trader args
-        
-        trader_id = i - 2;
+    for (int i = 0; i < n; i++) {
+
+        /* Create named pipes */
+
+        trader_id = traders[i].id;
+
         snprintf(fifo_path_exchange, PATH_LEN, FIFO_EXCHANGE, trader_id);
         snprintf(fifo_path_trader, PATH_LEN, FIFO_TRADER, trader_id);
 
@@ -77,8 +104,37 @@ void setup_pipes(int argc, char const *argv[]) {
         }
 
         printf("%s Created FIFO %s\n", LOG_PREFIX,fifo_path_trader);
+
+        /* Execute child binary */ 
+
+        launch(&traders[i]);
+
+        /* Connect to pipes */
+
+        int outgoing_fd = open(fifo_path_exchange, O_WRONLY);
+        if (outgoing_fd == -1) {
+            perror("Open exchange FIFO");
+            exit(2);
+        }
+
+        printf("%s Connected to %s\n", LOG_PREFIX, fifo_path_exchange);
+
+        int incoming_fd = open(fifo_path_exchange, O_RDONLY);
+        if (incoming_fd == -1) {
+            perror("Open trader FIFO");
+            exit(2);
+        } 
+
+        printf("%s Connected to %s\n", LOG_PREFIX, fifo_path_trader);
+        traders[trader_id].incoming_fd = incoming_fd;
+        traders[trader_id].outgoing_fd = outgoing_fd;
     }
 }
+
+/** Main
+ * 
+ * 
+ */
 
 int main(int argc, char const *argv[])
 {
@@ -88,9 +144,7 @@ int main(int argc, char const *argv[])
     }
 
     printf("%s Starting\n", LOG_PREFIX); 
-
-    node* products_ll = init_products(argv[1]);
-    
+       
    /* Start-up 
     * 1. Read product file 
     * 2. Create named pipes for each trader (>= n)
@@ -98,8 +152,25 @@ int main(int argc, char const *argv[])
     * 4. After launching each binary, exchange and trader connect to FIFO
     */
 
-    /* Setup product list */
-  
+    node* products_ll = init_products(argv[1]);
+    trader * traders = get_traders(argc, argv);
+
+    init_traders(traders, argc - 2);
+
+    /* Epoll setup */
+    
+    // int epoll_fd = epoll_create(NUMBER_OF_FIFOS);
+    // for trader in trader_ls {
+    //     struct epoll_event event = {0};
+    //     es.events = EPOLLIN | EPOLLET;
+
+    //     es.data.fd = trader.FIFO_FD;
+
+    //     int ret = epoll_ctl(epoll_inst, EPOLL_CTL_ADD, trader.FIFO_FD, &event);
+    // }
+    
+
+    
 
    /* Endgame
     * - Print [PEX] Trader <Trader ID> disconnected
@@ -111,6 +182,7 @@ int main(int argc, char const *argv[])
     /* Free memory */
 
     list_free(products_ll);
+    free(traders);
 
     return 0;
 }

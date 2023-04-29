@@ -28,7 +28,7 @@ build/
 !examples/
 
 # ignore example code
-templates
+sample
 
 # useful docs on gitignore:
 # https://git-scm.com/docs/gitignore

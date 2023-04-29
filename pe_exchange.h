@@ -3,6 +3,8 @@
 
 #include "pe_common.h"
 
+#include <sys/epoll.h>
+
 #define PATH_LEN 50
 #define BUFFER_LEN 50
 
@@ -15,8 +17,9 @@ typedef struct node{
 
 typedef struct trader {
     int id;
-    int incoming;
-    int outgoing;
+    int incoming_fd;
+    int outgoing_fd;
+    char path[PATH_LEN];
 } trader;
 
 node* list_init(char * input);
