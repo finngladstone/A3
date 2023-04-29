@@ -69,26 +69,25 @@ void setup_pipes(int argc, char const *argv[]) {
             exit(2);
         }
 
-        printf("[SPX] Created FIFO %s\n", fifo_path_exchange);        
+        printf("%s Created FIFO %s\n", LOG_PREFIX, fifo_path_exchange);        
 
         if (mkfifo(fifo_path_trader, 0666) == -1) {
             perror("Trader mkfifo() failed");
             exit(2);
         }
 
-        printf("[SPX] Created FIFO %s\n", fifo_path_trader);
+        printf("%s Created FIFO %s\n", LOG_PREFIX,fifo_path_trader);
     }
 }
 
 int main(int argc, char const *argv[])
 {
-
     if (argc < 2) {
         printf("Invalid launch options\n");
         return 2;
     }
 
-    printf("%s Starting\n", LOG_PREFIX); // custom printf for [SPX] ?
+    printf("%s Starting\n", LOG_PREFIX); 
 
     node* products_ll = init_products(argv[1]);
     
@@ -103,10 +102,10 @@ int main(int argc, char const *argv[])
   
 
    /* Endgame
-    * - Print [SPX] Trader <Trader ID> disconnected
+    * - Print [PEX] Trader <Trader ID> disconnected
     * - Reject pending / concurrent orders, maintain existing
-    * - [SPX] Trading completed
-    * - [SPX] Exchange fees collected: $<total fees>
+    * - [PEX] Trading completed
+    * - [PEX] Exchange fees collected: $<total fees>
     */
 
     /* Free memory */
