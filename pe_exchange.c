@@ -11,13 +11,13 @@ node* init_products(const char * filename) {
         exit(2);
     }
 
-    char buffer[BUFFER_LEN];
+    char buffer[BUFFER_LEN] = {0};
 
     int i;
     for (i = 0; i < n; i++) {
         fgets(buffer, BUFFER_LEN, myfile);
+        buffer[strlen(buffer)-2] = '\0';
 
-        buffer[strlen(buffer) - 1] = '\0';
         list_add(&head, buffer);
     }
 
@@ -25,13 +25,14 @@ node* init_products(const char * filename) {
 
     node* c = head;
     while(c){
-        printf("%s",c->data);
+        if (c->next == NULL)
+            printf("%s\n", c->data);
+        else   
+            printf("%s ", c->data);
         c = c->next;
     }
 
-    printf("\n");
-
-    // list_add(&head, "data");
+    list_add(&head, "data");
 
     return head;
 }

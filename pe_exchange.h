@@ -4,7 +4,7 @@
 #include "pe_common.h"
 
 #define PATH_LEN 50
-#define BUFFER_LEN 128
+#define BUFFER_LEN 50
 
 #define LOG_PREFIX "[PEX]"
 
