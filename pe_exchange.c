@@ -1,11 +1,22 @@
 #include "pe_exchange.h"
 
+/** 
+ * Open fd for products list 
+ * Initialise LL for products using Richard's template
+ * Output status message
+ * Need to call list_free() upon endgame!
+ */
+
 node* init_products(const char * filename) {
+
     node* head = NULL;  
+    FILE * myfile;
+    if ((myfile = fopen(filename, "r")) == NULL) {
+        perror("Error opening product file");
+        exit(1);
+    }
 
-    FILE * myfile = fopen(filename, "r");
     int n;
-
     if (fscanf(myfile, "%d\n", &n) != 1) {
         perror("Failed to read number of products");
         exit(2);
@@ -32,8 +43,7 @@ node* init_products(const char * filename) {
         c = c->next;
     }
 
-    list_add(&head, "data");
-
+    fclose(myfile);
     return head;
 }
 
