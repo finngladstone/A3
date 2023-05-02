@@ -10,7 +10,7 @@
  * 
  */
 
-node* list_init(char * input){
+node* list_init(char * input) {
     node* n = calloc(1, sizeof(node));
     n->next = NULL;
     n->data = (char *) malloc(strlen(input) + 1);
@@ -20,12 +20,12 @@ node* list_init(char * input){
     return n;
 }
 
-node* list_next(node* n){
+node* list_next(node* n) {
     if (n == NULL) return NULL;
     return n->next;
 }
 
-void list_add(node** h, char * input){
+void list_add(node** h, char * input) {
     if (*h == NULL) {
         *h = list_init(input);
         return;
@@ -37,7 +37,7 @@ void list_add(node** h, char * input){
     cursor->next = list_init(input);
 }
 
-void list_free(node* head){
+void list_free(node* head) {
     node* cursor = head;
     while(cursor){
         node* tmp = cursor->next;
