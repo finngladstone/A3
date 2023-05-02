@@ -91,16 +91,20 @@ void init_traders(trader * traders, int n) {
         snprintf(fifo_path_exchange, PATH_LEN, FIFO_EXCHANGE, trader_id);
         snprintf(fifo_path_trader, PATH_LEN, FIFO_TRADER, trader_id);
 
-        if (mkfifo(fifo_path_exchange, 0666) == -1) {
-            perror("Exchange mkfifo() failed");
-            exit(2);
+        if (access(fifo_path_exchange, F_OK) == -1) {
+            if (mkfifo(fifo_path_exchange, 0666) == -1) { 
+                perror("Exchange mkfifo() failed");
+                exit(2);
+            }
         }
 
         printf("%s Created FIFO %s\n", LOG_PREFIX, fifo_path_exchange);        
 
-        if (mkfifo(fifo_path_trader, 0666) == -1) {
-            perror("Trader mkfifo() failed");
-            exit(2);
+        if (access(fifo_path_trader, F_OK) == -1) {
+            if (mkfifo(fifo_path_trader, 0666) == -1) {
+                perror("Trader mkfifo() failed");
+                exit(2);
+            }
         }
 
         printf("%s Created FIFO %s\n", LOG_PREFIX, fifo_path_trader);
@@ -112,6 +116,8 @@ void init_traders(trader * traders, int n) {
         /* Connect to pipes */
 
         int outgoing_fd = open(fifo_path_exchange, O_WRONLY);
+        // fcntl(outgoing_fd, F_SETFL, O_NONBLOCK);
+
         if (outgoing_fd == -1) {
             perror("Open exchange FIFO");
             exit(2);
@@ -120,6 +126,8 @@ void init_traders(trader * traders, int n) {
         printf("%s Connected to %s\n", LOG_PREFIX, fifo_path_exchange);
 
         int incoming_fd = open(fifo_path_exchange, O_RDONLY);
+        // fcntl(incoming_fd, F_SETFL, O_NONBLOCK);
+
         if (incoming_fd == -1) {
             perror("Open trader FIFO");
             exit(2);
