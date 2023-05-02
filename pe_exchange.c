@@ -59,20 +59,27 @@ trader* get_traders(int argc, char const *argv[]) {
 }
 
 void launch(trader * t) {
-
-    // pid_t pid;
-
-    // pid = fork();
-    // if (pid == -1) {
-    //     perror("Fork() in init_traders failed");
-    //     exit(2);
-    // }
-
-    // if (pid == 0) {
-    //     exit(0);
-    // }
-
     printf("%s Starting trader %d (%s)\n", LOG_PREFIX, t->id, t->path);
+
+    pid_t pid;
+
+    pid = fork();
+    if (pid == -1) {
+        perror("Fork() in init_traders failed");
+        exit(2);
+    }
+
+    if (pid == 0) { // child
+        
+        char id_string[3] = {0};
+        snprintf(id_string, 2, "%d", t->id);
+
+        if (execl(t->path, id_string) == -1) {
+            perror("execv");
+            exit(EXIT_FAILURE);
+        }
+    }
+
     return;
 }
 
