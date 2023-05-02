@@ -103,7 +103,7 @@ void init_traders(trader * traders, int n) {
             exit(2);
         }
 
-        printf("%s Created FIFO %s\n", LOG_PREFIX,fifo_path_trader);
+        printf("%s Created FIFO %s\n", LOG_PREFIX, fifo_path_trader);
 
         /* Execute child binary */ 
 
@@ -129,6 +129,10 @@ void init_traders(trader * traders, int n) {
         traders[trader_id].incoming_fd = incoming_fd;
         traders[trader_id].outgoing_fd = outgoing_fd;
     }
+}
+
+void close_fifos(trader * t) {
+
 }
 
 /** Main
