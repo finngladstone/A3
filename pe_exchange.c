@@ -7,6 +7,10 @@
  * Need to call list_free() upon endgame!
  */
 
+void signal_handler(int s, siginfo_t* sinfo, void * context) {}
+
+void signal_h(int s) {}
+
 node* init_products(const char * filename) {
 
     node* head = NULL;  
@@ -78,6 +82,8 @@ void launch(trader * t) {
             perror("execl failed");
             exit(2);
         }
+    } else {
+        t->pid = pid;
     }
 
     return;
@@ -210,6 +216,29 @@ int main(int argc, char const *argv[])
 
     //     }
     // }
+
+    /* Signal handling */
+
+    struct sigaction s = {0};
+    s.sa_flags |= SA_SIGINFO;
+
+    s.sa_sigaction = signal_handler;
+    signal(SIGUSR1, signal_h);
+
+    /** Main loop
+     * 1) Wait for signal 
+     * 2) Get trader PID
+     * 2) Use epoll to check that trader has actually written to pipe
+     * 3) Extract data
+     * 4) parse command
+     * 5) Update and communicate back to traders
+     */
+
+    while(1) {
+        pause(); 
+    }
+
+
     
 
     
@@ -230,7 +259,7 @@ int main(int argc, char const *argv[])
 
     /* Free memory */
 
-    list_free(products_ll);
+    list_free(products_ll); 
     free(traders);
     // free(events);
 

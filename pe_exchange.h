@@ -20,6 +20,7 @@ typedef struct trader {
     int incoming_fd;
     int outgoing_fd;
     char path[PATH_LEN];
+    int pid;
 } trader;
 
 node* list_init(char * input);
