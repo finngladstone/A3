@@ -75,8 +75,8 @@ void launch(trader * t) {
         snprintf(id_string, 2, "%d", t->id);
 
         if (execl(t->path, id_string) == -1) {
-            perror("execv");
-            exit(EXIT_FAILURE);
+            perror("execl failed");
+            exit(2);
         }
     }
 
@@ -146,8 +146,28 @@ void init_traders(trader * traders, int n) {
     }
 }
 
-void close_fifos(trader * t) {
+int init_epoll(trader * traders, int len) {
 
+    int epoll_instance = epoll_create(len);
+
+    for (int i = 0; i < len; i++) {
+        struct epoll_event e = {0};
+        e.events = EPOLLIN;
+
+        e.data.fd = traders[i].incoming_fd;
+
+        if (epoll_ctl(epoll_instance, EPOLL_CTL_ADD, traders[i].incoming_fd, &e) == -1) {
+            perror("epoll_ctl fail");
+            exit(2);
+        }
+    }
+
+    return epoll_instance;
+}
+
+void close_fifos(trader * t) {
+    close(t->incoming_fd);
+    close(t->outgoing_fd);
 }
 
 /** Main
@@ -171,21 +191,24 @@ int main(int argc, char const *argv[])
     * 4. After launching each binary, exchange and trader connect to FIFO
     */
 
-    node* products_ll = init_products(argv[1]);
-    trader * traders = get_traders(argc, argv);
+    node* products_ll = init_products(argv[1]); // get products
+    trader * traders = get_traders(argc, argv); // get list of traders
 
-    init_traders(traders, argc - 2);
+    init_traders(traders, argc - 2); // create trader pipes, fork, fifo connects
 
-    /* Epoll setup */
+    /* Epoll setup */ 
+
+    // int epoll_fd;
+    // epoll_fd = init_epoll(traders, argc - 2);
+
+    // struct epoll_event * events = malloc(argc - 2 * sizeof(struct epoll_event));
     
-    // int epoll_fd = epoll_create(NUMBER_OF_FIFOS);
-    // for trader in trader_ls {
-    //     struct epoll_event event = {0};
-    //     es.events = EPOLLIN | EPOLLET;
+    // while(1) {
+    //     int num_events = epoll_wait(epoll_fd, events, argc-2, -1);
 
-    //     es.data.fd = trader.FIFO_FD;
+    //     for (int i = 0; i < num_events; i++) {
 
-    //     int ret = epoll_ctl(epoll_inst, EPOLL_CTL_ADD, trader.FIFO_FD, &event);
+    //     }
     // }
     
 
@@ -198,10 +221,18 @@ int main(int argc, char const *argv[])
     * - [PEX] Exchange fees collected: $<total fees>
     */
 
+    /* Close fds */
+
+    for (int i = 0; i < argc-2; i++) {
+        trader t = traders[i];
+        close_fifos(&t);
+    }
+
     /* Free memory */
 
     list_free(products_ll);
     free(traders);
+    // free(events);
 
     return 0;
 }
