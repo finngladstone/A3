@@ -53,8 +53,8 @@ product_node* init_products(const char * filename) {
     return head;
 }
 
-trader* get_traders(int argc, char const *argv[]) {
-    trader * traders = malloc((argc - 2) * sizeof(trader));
+struct trader* get_traders(int argc, char const *argv[]) {
+    struct trader * traders = malloc((argc - 2) * sizeof(struct trader));
 
     for (int i = 2; i < argc; i++) {
         traders[i-2].id = i-2;
@@ -64,7 +64,7 @@ trader* get_traders(int argc, char const *argv[]) {
     return traders;
 }
 
-void launch(trader * t) {
+void launch(struct trader * t) {
     printf("%s Starting trader %d (%s)\n", LOG_PREFIX, t->id, t->path);
 
     pid_t pid;
@@ -91,7 +91,7 @@ void launch(trader * t) {
     return;
 }
 
-void init_traders(trader * traders, int n) {  
+void init_traders(struct trader * traders, int n) {  
     char fifo_path_trader[PATH_LEN] = {0};
     char fifo_path_exchange[PATH_LEN] = {0};
     
@@ -154,7 +154,7 @@ void init_traders(trader * traders, int n) {
     }
 }
 
-int init_epoll(trader * traders, int len) {
+int init_epoll(struct trader * traders, int len) {
 
     int epoll_instance = epoll_create(len);
 
@@ -173,7 +173,7 @@ int init_epoll(trader * traders, int len) {
     return epoll_instance;
 }
 
-void close_fifos(trader * t) {
+void close_fifos(struct trader * t) {
     close(t->incoming_fd);
     close(t->outgoing_fd);
 }
@@ -200,7 +200,7 @@ int main(int argc, char const *argv[])
     */
 
     product_node* products_ll = init_products(argv[1]); // get products
-    trader * traders = get_traders(argc, argv); // get list of traders
+    struct trader * traders = get_traders(argc, argv); // get list of traders
 
     init_traders(traders, argc - 2); // create trader pipes, fork, fifo connects
 
@@ -256,7 +256,7 @@ int main(int argc, char const *argv[])
     /* Close fds */
 
     for (int i = 0; i < argc-2; i++) {
-        trader t = traders[i];
+        struct trader t = traders[i];
         close_fifos(&t);
     }
 

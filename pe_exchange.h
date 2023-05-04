@@ -10,6 +10,10 @@
 
 #define LOG_PREFIX "[PEX]"
 
+/** 
+ * Database-like structs
+ */
+
 typedef struct product_node{
     struct product_node* next;
     char * data;
@@ -17,6 +21,8 @@ typedef struct product_node{
 } product_node;
 
 typedef struct order_node {
+    struct order_node* next;
+
     struct trader* trader;
     int quantity;
     int unit_cost;
@@ -24,13 +30,13 @@ typedef struct order_node {
     int order_id;
 } order_node;
 
-typedef struct trader {
+struct trader {
     int id;
     int incoming_fd;
     int outgoing_fd;
     char path[PATH_LEN];
     int pid;
-} trader;
+};
 
 
 product_node* product_list_init(char * input);
@@ -41,7 +47,7 @@ void product_list_add(product_node** h, char * input);
 
 void product_list_free(product_node* head);
 
-void MARKET_OPEN(trader * traders, int len);
+void MARKET_OPEN(struct trader * traders, int len);
 
 
 #endif 
