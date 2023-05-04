@@ -10,8 +10,8 @@
  * 
  */
 
-node* list_init(char * input) {
-    node* n = calloc(1, sizeof(node));
+product_node* product_list_init(char * input) {
+    product_node* n = calloc(1, sizeof(product_node));
     n->next = NULL;
     n->data = (char *) malloc(strlen(input) + 1);
 
@@ -20,27 +20,27 @@ node* list_init(char * input) {
     return n;
 }
 
-node* list_next(node* n) {
+product_node* product_list_next(product_node* n) {
     if (n == NULL) return NULL;
     return n->next;
 }
 
-void list_add(node** h, char * input) {
+void product_list_add(product_node** h, char * input) {
     if (*h == NULL) {
-        *h = list_init(input);
+        *h = product_list_init(input);
         return;
     }
-    node* cursor = *h;
+    product_node* cursor = *h;
     while (cursor->next){
         cursor = cursor->next;
     }
-    cursor->next = list_init(input);
+    cursor->next = product_list_init(input);
 }
 
-void list_free(node* head) {
-    node* cursor = head;
+void product_list_free(product_node* head) {
+    product_node* cursor = head;
     while(cursor){
-        node* tmp = cursor->next;
+        product_node* tmp = cursor->next;
         free(cursor->data);
         free(cursor);
         cursor = tmp;

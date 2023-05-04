@@ -7,13 +7,14 @@
  * Need to call list_free() upon endgame!
  */
 
-void signal_handler(int s, siginfo_t* sinfo, void * context) {}
+void signal_handler(int s, siginfo_t* sinfo, void * context) {
+    // int who = sinfo->si_pid;
+    // [SPX] [T0] Parsing command: <BUY 0 GPU 30 500>
+}
 
-void signal_h(int s) {}
+product_node* init_products(const char * filename) {
 
-node* init_products(const char * filename) {
-
-    node* head = NULL;  
+    product_node* head = NULL;  
     FILE * myfile;
     if ((myfile = fopen(filename, "r")) == NULL) {
         perror("Error opening product file");
@@ -33,17 +34,18 @@ node* init_products(const char * filename) {
         fgets(buffer, BUFFER_LEN, myfile);
         buffer[strlen(buffer)-2] = '\0';
 
-        list_add(&head, buffer);
+        product_list_add(&head, buffer);
     }
 
     printf("%s Trading %d products: ", LOG_PREFIX, i);
 
-    node* c = head;
+    product_node* c = head;
     while(c){
         if (c->next == NULL)
             printf("%s\n", c->data);
         else   
             printf("%s ", c->data);
+        
         c = c->next;
     }
 
@@ -197,7 +199,7 @@ int main(int argc, char const *argv[])
     * 4. After launching each binary, exchange and trader connect to FIFO
     */
 
-    node* products_ll = init_products(argv[1]); // get products
+    product_node* products_ll = init_products(argv[1]); // get products
     trader * traders = get_traders(argc, argv); // get list of traders
 
     init_traders(traders, argc - 2); // create trader pipes, fork, fifo connects
@@ -222,8 +224,9 @@ int main(int argc, char const *argv[])
     struct sigaction s = {0};
     s.sa_flags |= SA_SIGINFO;
 
-    s.sa_sigaction = signal_handler;
-    signal(SIGUSR1, signal_h);
+    s.sa_sigaction = signal_handler; // could block other signals at this point
+
+    // MARKET_OPEN(traders, argc-2);
 
     /** Main loop
      * 1) Wait for signal 
@@ -234,9 +237,9 @@ int main(int argc, char const *argv[])
      * 5) Update and communicate back to traders
      */
 
-    while(1) {
-        pause(); 
-    }
+    // while(1) {
+    //     pause(); 
+    // }
 
 
     
@@ -259,7 +262,7 @@ int main(int argc, char const *argv[])
 
     /* Free memory */
 
-    list_free(products_ll); 
+    product_list_free(products_ll); 
     free(traders);
     // free(events);
 

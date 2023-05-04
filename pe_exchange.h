@@ -10,10 +10,19 @@
 
 #define LOG_PREFIX "[PEX]"
 
-typedef struct node{
-    struct node* next;
+typedef struct product_node{
+    struct product_node* next;
     char * data;
-} node;
+
+} product_node;
+
+typedef struct order_node {
+    struct trader* trader;
+    int quantity;
+    int unit_cost;
+    struct product_node * product; 
+    int order_id;
+} order_node;
 
 typedef struct trader {
     int id;
@@ -23,13 +32,16 @@ typedef struct trader {
     int pid;
 } trader;
 
-node* list_init(char * input);
 
-node* list_next(node* n);
+product_node* product_list_init(char * input);
 
-void list_add(node** h, char * input);
+product_node* product_list_next(product_node* n);
 
-void list_free(node* head);
+void product_list_add(product_node** h, char * input);
+
+void product_list_free(product_node* head);
+
+void MARKET_OPEN(trader * traders, int len);
 
 
 #endif 
