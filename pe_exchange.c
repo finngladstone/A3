@@ -12,9 +12,9 @@ void signal_handler(int s, siginfo_t* sinfo, void * context) {
     // [SPX] [T0] Parsing command: <BUY 0 GPU 30 500>
 }
 
-product_node* init_products(const char * filename) {
+list_node* init_products(const char * filename) {
 
-    product_node* head = NULL;  
+    list_node* head = NULL;  
     FILE * myfile;
     if ((myfile = fopen(filename, "r")) == NULL) {
         perror("Error opening product file");
@@ -34,17 +34,20 @@ product_node* init_products(const char * filename) {
         fgets(buffer, BUFFER_LEN, myfile);
         buffer[strlen(buffer)-2] = '\0';
 
-        product_list_add(&head, buffer);
+        product * p = calloc(1, sizeof(product));
+        strcpy(p->name, buffer);
+
+        list_add(&head, p, PRODUCT);
     }
 
     printf("%s Trading %d products: ", LOG_PREFIX, i);
 
-    product_node* c = head;
+    list_node* c = head;
     while(c){
         if (c->next == NULL)
-            printf("%s\n", c->data);
+            printf("%s\n", c->data.product.name);
         else   
-            printf("%s ", c->data);
+            printf("%s ", c->data.product.name);
         
         c = c->next;
     }
@@ -199,7 +202,7 @@ int main(int argc, char const *argv[])
     * 4. After launching each binary, exchange and trader connect to FIFO
     */
 
-    product_node* products_ll = init_products(argv[1]); // get products
+    list_node* products_ll = init_products(argv[1]); // get products
     struct trader * traders = get_traders(argc, argv); // get list of traders
 
     init_traders(traders, argc - 2); // create trader pipes, fork, fifo connects
@@ -262,7 +265,7 @@ int main(int argc, char const *argv[])
 
     /* Free memory */
 
-    product_list_free(products_ll); 
+    list_free(products_ll); 
     free(traders);
     // free(events);
 

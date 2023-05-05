@@ -8,40 +8,69 @@
  * URL
  * https://edstem.org/au/courses/10466/workspaces/pXPFniggiFxocDNyTPzgNF2hw8mA00wk
  * 
- */
+ */ 
 
-product_node* product_list_init(char * input) {
-    product_node* n = calloc(1, sizeof(product_node));
+list_node * list_init(void* data, data_type type) {
+    list_node * n = calloc(1, sizeof(list_node));
+    n->type = type;
+
+    switch(type) {
+        case ORDER:
+            n->data.order = *(order*)data;
+            break;
+        case PRODUCT:
+            n->data.product = *(product*)data;
+            break;
+        case POSITION:
+            n->data.position = *(position*)data;
+            break;
+    }
+
     n->next = NULL;
-    n->data = (char *) malloc(strlen(input) + 1);
-
-    strcpy(n->data, input);
-
     return n;
+    
 }
 
-product_node* product_list_next(product_node* n) {
+list_node * list_next(list_node * n) {
     if (n == NULL) return NULL;
     return n->next;
 }
 
-void product_list_add(product_node** h, char * input) {
+void list_add(list_node** h, void* data, data_type type) {
     if (*h == NULL) {
-        *h = product_list_init(input);
+        *h = list_init(data, type);
         return;
     }
-    product_node* cursor = *h;
-    while (cursor->next){
+
+    list_node* cursor = *h;
+    while (cursor->next) 
         cursor = cursor->next;
-    }
-    cursor->next = product_list_init(input);
+
+    cursor->next = list_init(data, type);
 }
 
-void product_list_free(product_node* head) {
-    product_node* cursor = head;
-    while(cursor){
-        product_node* tmp = cursor->next;
-        free(cursor->data);
+void list_delete(list_node** h, list_node* n) {
+    if (*h == NULL) return;
+    list_node* cursor = *h;
+    if (*h == n) {
+        *h = (*h)->next;
+        return;
+    }
+    while (cursor->next != n){
+        if (cursor->next == NULL) return;
+        cursor = cursor->next;
+    }
+    list_node* future = cursor->next->next;
+    free(cursor->next);
+    cursor->next = future;
+    return;
+}
+
+void list_free(list_node* h) {
+    list_node * cursor = h;
+
+    while(cursor) {
+        list_node * tmp = cursor->next;
         free(cursor);
         cursor = tmp;
     }
