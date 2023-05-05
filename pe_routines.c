@@ -1,17 +1,22 @@
 #include "pe_exchange.h"
 
-void MARKET_OPEN(trader * traders, int len) {
-    for (int i = 0; i < len; i++) {
-        write_data(traders[i].outgoing_fd, "MARKET OPEN;");
+trader * find_trader(int pid, struct trader * traders, int n) {
+    for (int i = 0; i < n; i++) {
+        if (&traders[i].pid == pid)
+            return &traders[i];
     }
+
+    return NULL;
 }
 
-void ORDERBOOK(trader * traders, int len) {
-    /**
-     * for product in products.txt
-     *      - count number of buy orders 
-     *      - count number of sell orders
-     *      - collate orders with same price 
-     * 
-     */
+char* id_command(char * src) {
+    char* word;
+    
+    size_t len = strcspn(src, " ");
+    word = (char*)malloc(len + 1);
+
+    strncpy(word, src, len);
+    word[len] = '\0';
+
+    return word;
 }

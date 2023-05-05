@@ -2,7 +2,7 @@
 
 /** USYD CODE CITATION ACKNOWLEDGEMENT
  * I declare that the following lines of code have been sourced 
- * from Richard McKenzie's lab solutions and implemented
+ * from Richard McKenzie's lab solution and implemented
  * with some level of modifications
  * 
  * URL

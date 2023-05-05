@@ -5,6 +5,8 @@
 
 #include <sys/epoll.h>
 
+/** Constants */
+
 #define PATH_LEN 50
 #define BUFFER_LEN 50
 
@@ -20,7 +22,7 @@ typedef struct trader trader;
 
 /** 
  * Database-like structs
- */
+*/
 
 typedef struct trader {
     int id;
@@ -92,8 +94,8 @@ void list_add(list_node** h, void* data, data_type type);
 void list_delete(list_node** h, list_node* n);
 void list_free(list_node* h);
 
-
-void MARKET_OPEN(struct trader * traders, int len);
-
+/** Helper functions */
+trader * find_trader(int pid, struct trader * traders, int n);
+char* id_command(char * src);
 
 #endif 

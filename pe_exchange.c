@@ -7,8 +7,16 @@
  * Need to call list_free() upon endgame!
  */
 
+//global
+
+int who;
+
+void parse_command(trader * t, char * command) {
+    
+}
+
 void signal_handler(int s, siginfo_t* sinfo, void * context) {
-    // int who = sinfo->si_pid;
+    who = sinfo->si_pid;
     // [SPX] [T0] Parsing command: <BUY 0 GPU 30 500>
 }
 
@@ -242,6 +250,7 @@ int main(int argc, char const *argv[])
 
     // while(1) {
     //     pause(); 
+    // 
     // }
 
 
