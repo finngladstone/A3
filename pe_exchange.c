@@ -82,7 +82,47 @@ void parse_command(trader * t, char * command, list_node * product_head) {
     } 
 
     else if (strcmp(word, "SELL")) {
+        if (sscanf(command, "SELL %i %49[^\n] %i %i;", &order_id, product_name, &quantity, &unit_price) != 4) {
+            ;//invalid
+        }
 
+        if (order_id != t->next_order_id) {
+            ; // invalid
+        }
+
+        list_node * l = list_find(product_head, product_name);
+        if (l == NULL) {
+            // invalid product name
+        }
+        product * p = &l->data.product;
+
+        if (quantity < 1 || quantity > 999999) {
+            //invalid
+        }
+
+        if (unit_price < 1 || unit_price > 999999) {
+            // invalid
+        }
+
+        order o = {0};
+
+        o.broker = t;
+        o.product = p;
+
+        o.quantity = quantity;
+        o.unit_cost = unit_price;
+        o.order_id = order_id;
+        o.time = time;
+
+        list_add(&t->orders, &o, ORDER);
+        list_add(&p->sell_orders, &o, ORDER);
+
+        t->next_order_id++;
+        time++;
+
+        //SEND_ACCEPTED
+        //SEND_MARKET_UPDATE
+        //CHECK_MATCH_AND_FILL
     }
 
     else if (strcmp(word, "AMEND")) {
