@@ -12,7 +12,43 @@
 int who;
 
 void parse_command(trader * t, char * command) {
-    
+    // verbose
+    printf("%s [T%d] Parsing command: %s\n", LOG_PREFIX, t->id, command);
+
+    int order_id;
+    int quantity;
+    int unit_price;
+    char product_name[PRODUCT_LEN] = {0};
+
+    char word[CMD_LEN];
+    id_command(command, word);
+
+    if (word == NULL) {
+        // invalid 
+    }
+
+    if (strcmp(word, "BUY")) {
+        if (sscanf(command, "BUY %i %49[^\n] %i %i;", &order_id, product_name, &quantity, &unit_price) != 4) {
+            printf("Invalid!\n");
+        }
+
+    } 
+
+    else if (strcmp(word, "SELL")) {
+
+    }
+
+    else if (strcmp(word, "AMEND")) {
+
+    } 
+
+    else if (strcmp(word, "CANCEL")) {
+
+    }
+
+    else {
+
+    }
 }
 
 void signal_handler(int s, siginfo_t* sinfo, void * context) {
@@ -252,11 +288,6 @@ int main(int argc, char const *argv[])
     //     pause(); 
     // 
     // }
-
-
-    
-
-    
 
    /* Endgame
     * - Print [PEX] Trader <Trader ID> disconnected

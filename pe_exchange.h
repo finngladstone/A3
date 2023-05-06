@@ -9,6 +9,8 @@
 
 #define PATH_LEN 50
 #define BUFFER_LEN 50
+#define CMD_LEN 7
+#define PRODUCT_LEN 17
 
 #define LOG_PREFIX "[PEX]"
 
@@ -96,6 +98,6 @@ void list_free(list_node* h);
 
 /** Helper functions */
 trader * find_trader(int pid, struct trader * traders, int n);
-char* id_command(char * src);
+void id_command(char * src, char * dest);
 
 #endif 
