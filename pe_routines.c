@@ -22,12 +22,12 @@ void id_command(char * src, char * dest) {
     return;
 }
 
-void SEND_ACCEPTED(trader t, int id) {
-    char buffer[BUFFER_LEN];
-    snprintf(buffer, 49, "ACCEPTED %i;", id);
-    write_data(t.outgoing_fd, buffer);
-}
+// void SEND_ACCEPTED(trader t, int id) {
+//     char buffer[BUFFER_LEN];
+//     snprintf(buffer, 49, "ACCEPTED %i;", id);
+//     write_data(t.outgoing_fd, buffer);
+// }
 
-void SEND_MARKET_UPDATE(trader * traders, trader src) {
+// void SEND_MARKET_UPDATE(trader * traders, trader src) {
 
-}
+// }

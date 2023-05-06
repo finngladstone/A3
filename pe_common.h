@@ -21,6 +21,4 @@
 #define FIFO_TRADER "/tmp/pe_trader_%d"
 #define FEE_PERCENTAGE 1
 
-void write_data(int fd, char * message);
-
 #endif
