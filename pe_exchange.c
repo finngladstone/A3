@@ -10,6 +10,7 @@
 //global
 
 int who;
+int time;
 
 void parse_command(trader * t, char * command, list_node * product_head) {
     // verbose
@@ -66,11 +67,17 @@ void parse_command(trader * t, char * command, list_node * product_head) {
         o.quantity = quantity;
         o.unit_cost = unit_price;
         o.order_id = order_id;
+        o.time = time;
 
         list_add(&t->orders, &o, ORDER);
         list_add(&p->buy_orders, &o, ORDER);
 
         t->next_order_id++;
+        time++;
+
+        //SEND_ACCEPTED
+        //SEND_MARKET_UPDATE
+        //CHECK_MATCH_AND_FILL
 
     } 
 

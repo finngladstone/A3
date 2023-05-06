@@ -59,6 +59,8 @@ typedef struct order {
     int unit_cost;
     int order_id;
 
+    int time;
+
 } order;
 
 typedef struct position {
