@@ -11,7 +11,7 @@
 
 int who;
 
-void parse_command(trader * t, char * command) {
+void parse_command(trader * t, char * command, list_node * product_head) {
     // verbose
     printf("%s [T%d] Parsing command: %s\n", LOG_PREFIX, t->id, command);
 
@@ -28,9 +28,49 @@ void parse_command(trader * t, char * command) {
     }
 
     if (strcmp(word, "BUY")) {
-        if (sscanf(command, "BUY %i %49[^\n] %i %i;", &order_id, product_name, &quantity, &unit_price) != 4) {
-            printf("Invalid!\n");
+        if (sscanf(command, "BUY %i %49[^\n] %i %i;", &order_id, product_name, &quantity, &unit_price) != 4) { 
+            // invalid
         }
+
+        if (order_id != t->next_order_id) {
+            ; // invalid
+        }
+
+        list_node * l = list_find(product_head, product_name);
+        if (l == NULL) {
+            // invalid product name
+        }
+        product * p = &l->data.product;
+
+        if (quantity < 1 || quantity > 999999) {
+            //invalid
+        }
+
+        if (unit_price < 1 || unit_price > 999999) {
+            // invalid
+        }
+
+        /** order is valid
+         * - setup order struct
+         * - append order struct to product BUY + trader LL
+         * - increment t.next_order for future validity check
+         * - send ACCEPTED to trader; 
+         * - send MARKET msg to all other trader
+         */
+
+        order o = {0};
+
+        o.broker = t;
+        o.product = p;
+
+        o.quantity = quantity;
+        o.unit_cost = unit_price;
+        o.order_id = order_id;
+
+        list_add(&t->orders, &o, ORDER);
+        list_add(&p->buy_orders, &o, ORDER);
+
+        t->next_order_id++;
 
     } 
 
@@ -80,6 +120,8 @@ list_node* init_products(const char * filename) {
 
         product * p = calloc(1, sizeof(product));
         strcpy(p->name, buffer);
+        p->buy_orders = NULL;
+        p->sell_orders = NULL;
 
         list_add(&head, p, PRODUCT);
     }
@@ -106,6 +148,8 @@ struct trader* get_traders(int argc, char const *argv[]) {
     for (int i = 2; i < argc; i++) {
         traders[i-2].id = i-2;
         strcpy(traders[i-2].path, argv[i]);
+        traders[i-2].next_order_id = 0;
+        traders[i-2].orders = NULL;
     }
 
     return traders;
@@ -187,7 +231,7 @@ void init_traders(struct trader * traders, int n) {
 
         printf("%s Connected to %s\n", LOG_PREFIX, fifo_path_exchange);
 
-        int incoming_fd = open(fifo_path_exchange, O_RDONLY);
+        int incoming_fd = open(fifo_path_trader, O_RDONLY);
         // fcntl(incoming_fd, F_SETFL, O_NONBLOCK);
 
         if (incoming_fd == -1) {

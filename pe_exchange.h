@@ -21,6 +21,7 @@ typedef struct position position;
 typedef struct product product;
 typedef struct order order;
 typedef struct trader trader;
+typedef struct list_node list_node;
 
 /** 
  * Database-like structs
@@ -34,24 +35,25 @@ typedef struct trader {
     char path[PATH_LEN];
     int pid;
 
-    order * orders; //ll
-    position * positions; //ll
+    list_node * orders; //ll
+    list_node * positions; //ll
+    int next_order_id;
 
 } trader;
 
 /** These structs will be used in LLs */
 
 typedef struct product {
-    order * buy_orders;
-    order * sell_orders;
+    list_node * buy_orders;
+    list_node * sell_orders;
 
     char name[BUFFER_LEN];
 
 } product;
 
 typedef struct order {
-    trader broker;
-    product product;
+    trader * broker;
+    product * product;
 
     int quantity;
     int unit_cost;
@@ -95,6 +97,7 @@ list_node * list_next(list_node * n);
 void list_add(list_node** h, void* data, data_type type);
 void list_delete(list_node** h, list_node* n);
 void list_free(list_node* h);
+list_node* list_find(list_node* h, const char* name);
 
 /** Helper functions */
 trader * find_trader(int pid, struct trader * traders, int n);

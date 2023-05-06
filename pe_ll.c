@@ -75,3 +75,17 @@ void list_free(list_node* h) {
         cursor = tmp;
     }
 }
+
+list_node* list_find(list_node* h, const char* name) {
+    if (h == NULL || name == NULL) return NULL;
+    
+    list_node* cursor = h;
+    while (cursor) {
+        if (cursor->type == PRODUCT && strcmp(cursor->data.product.name, name) == 0) {
+            return cursor;
+        }
+        cursor = cursor->next;
+    }
+
+    return NULL; // If not found
+}
