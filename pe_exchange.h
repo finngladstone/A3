@@ -115,5 +115,7 @@ trader * find_trader(int pid, struct trader * traders, int n);
 void id_command(char * src, char * dest);
 order * find_trader_order(trader * t, int order_id);
 list_node * find_order_listnode(trader * t, int id);
+void send_data(int fd, char * message);
+void SEND_STATUS(trader * t, int id, statuses s);
 
 #endif 

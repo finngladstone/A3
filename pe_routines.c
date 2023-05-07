@@ -76,9 +76,6 @@ void SEND_STATUS(trader * t, int id, statuses s) {
 
     snprintf(buffer, BUFFER_LEN, "%s %i;", status, id);
     send_data(t->outgoing_fd, buffer);
+
+    kill(t->pid, SIGUSR1);
 }
-
-
-// void SEND_MARKET_UPDATE(trader * traders, trader src) {
-
-// }

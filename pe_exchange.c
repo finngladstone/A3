@@ -30,25 +30,25 @@ void parse_command(trader * t, char * command, list_node * product_head) {
 
     if (strcmp(word, "BUY")) {
         if (sscanf(command, "BUY %i %49[^\n] %i %i;", &order_id, product_name, &quantity, &unit_price) != 4) { 
-            // invalid
+            SEND_STATUS(t, -1, INVALID);
         }
 
         if (order_id != t->next_order_id) {
-            ; // invalid
+            SEND_STATUS(t, -1, INVALID);
         }
 
         list_node * l = list_find(product_head, product_name);
         if (l == NULL) {
-            // invalid product name
+            SEND_STATUS(t, -1, INVALID);
         }
         product * p = &l->data.product;
 
         if (quantity < 1 || quantity > 999999) {
-            //invalid
+            SEND_STATUS(t, -1, INVALID);
         }
 
         if (unit_price < 1 || unit_price > 999999) {
-            // invalid
+            SEND_STATUS(t, -1, INVALID);
         }
 
         /** order is valid
@@ -76,6 +76,8 @@ void parse_command(trader * t, char * command, list_node * product_head) {
         time++;
 
         //SEND_ACCEPTED
+        SEND_STATUS(t, order_id, ACCEPTED);
+
         //SEND_MARKET_UPDATE
         //CHECK_MATCH_AND_FILL
 
@@ -83,25 +85,25 @@ void parse_command(trader * t, char * command, list_node * product_head) {
 
     else if (strcmp(word, "SELL")) {
         if (sscanf(command, "SELL %i %49[^\n] %i %i;", &order_id, product_name, &quantity, &unit_price) != 4) {
-            ;//invalid
+            SEND_STATUS(t, -1, INVALID);
         }
 
         if (order_id != t->next_order_id) {
-            ; // invalid
+            SEND_STATUS(t, -1, INVALID);
         }
 
         list_node * l = list_find(product_head, product_name);
         if (l == NULL) {
-            // invalid product name
+            SEND_STATUS(t, -1, INVALID);
         }
         product * p = &l->data.product;
 
         if (quantity < 1 || quantity > 999999) {
-            //invalid
+            SEND_STATUS(t, -1, INVALID);
         }
 
         if (unit_price < 1 || unit_price > 999999) {
-            // invalid
+            SEND_STATUS(t, -1, INVALID);
         }
 
         order o = {0};
@@ -121,14 +123,16 @@ void parse_command(trader * t, char * command, list_node * product_head) {
         time++;
 
         //SEND_ACCEPTED
+        SEND_STATUS(t, o.order_id, ACCEPTED);
+
         //SEND_MARKET_UPDATE
         //CHECK_MATCH_AND_FILL
     }
 
     else if (strcmp(word, "AMEND")) {
         if (sscanf(command, "AMEND %i %i %i;", &order_id, &quantity, &unit_price) != 3) {
-            ;// invalid
-        }
+            
+        }   
 
         if (quantity < 1 || quantity > 999999) {
             // invalid q
@@ -151,6 +155,8 @@ void parse_command(trader * t, char * command, list_node * product_head) {
         to_amend->unit_cost = unit_price;
 
         //SEND_ACCEPTED
+        SEND_STATUS(t, order_id, AMENDED);
+
         //SEND_MARKET_UPDATE??
         //CHECK_MATCH_AND_FILL
 
@@ -170,6 +176,7 @@ void parse_command(trader * t, char * command, list_node * product_head) {
         list_delete(&t->orders, to_cancel);
 
         //SEND_CONFIRM
+        SEND_STATUS(t, order_id, CANCELLED);
 
     }
 
