@@ -126,7 +126,19 @@ void parse_command(trader * t, char * command, list_node * product_head) {
     }
 
     else if (strcmp(word, "AMEND")) {
+        if (sscanf("AMEND %i %i %i", &order_id, &quantity, &unit_price) != 3) {
+            ;// invalid
+        }
 
+        if (quantity < 1 || quantity > 999999) {
+            // invalid q
+        }
+
+        if (unit_price < 1 || unit_price > 999999) {
+            // inavlid p
+        }
+
+        
     } 
 
     else if (strcmp(word, "CANCEL")) {
