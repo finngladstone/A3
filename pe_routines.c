@@ -46,11 +46,38 @@ list_node * find_order_listnode(trader * t, int id) {
     return NULL;
 }
 
-// void SEND_ACCEPTED(trader t, int id) {
-//     char buffer[BUFFER_LEN];
-//     snprintf(buffer, 49, "ACCEPTED %i;", id);
-//     write_data(t.outgoing_fd, buffer);
-// }
+/** Comms framework */
+
+void send_data(int fd, char * message) {
+    if (write(fd, message, strlen(message)) == -1) {
+        perror("send_data shit the bed");
+    }
+}
+
+void SEND_STATUS(trader * t, int id, statuses s) {
+    
+    char * status;
+    char buffer[BUFFER_LEN];
+
+    switch(s) {
+        case ACCEPTED:
+            status = "ACCEPTED";
+            break;
+        case AMENDED:
+            status = "AMENDED";
+            break;
+        case CANCELLED:
+            status = "BREAK";
+            break;
+        case INVALID:
+            send_data(t->outgoing_fd, "INVALID;");
+            return;
+    }
+
+    snprintf(buffer, BUFFER_LEN, "%s %i;", status, id);
+    send_data(t->outgoing_fd, buffer);
+}
+
 
 // void SEND_MARKET_UPDATE(trader * traders, trader src) {
 

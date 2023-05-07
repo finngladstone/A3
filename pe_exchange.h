@@ -102,6 +102,15 @@ void list_free(list_node* h);
 list_node* list_find(list_node* h, const char* name);
 
 /** Helper functions */
+
+typedef enum {
+    ACCEPTED,
+    AMENDED,
+    CANCELLED,
+    INVALID
+} statuses;
+
+
 trader * find_trader(int pid, struct trader * traders, int n);
 void id_command(char * src, char * dest);
 order * find_trader_order(trader * t, int order_id);
