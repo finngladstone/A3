@@ -158,7 +158,19 @@ void parse_command(trader * t, char * command, list_node * product_head) {
     } 
 
     else if (strcmp(word, "CANCEL")) {
-        
+        if (sscanf(command, "CANCEL %i;", &order_id) != 1) {
+            ;//invalid
+        }
+
+        list_node * to_cancel = find_order_listnode(t, order_id);
+        if (to_cancel == NULL) {
+            // invalid
+        }
+
+        list_delete(&t->orders, to_cancel);
+
+        //SEND_CONFIRM
+
     }
 
     else {

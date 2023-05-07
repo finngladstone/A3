@@ -34,6 +34,18 @@ order * find_trader_order(trader * t, int order_id) {
     return NULL;
 }
 
+list_node * find_order_listnode(trader * t, int id) {
+    list_node* cursor = t->orders;
+
+    while(cursor) {
+        if (cursor->data.order.order_id == id) {
+            return cursor;
+        }
+    }
+
+    return NULL;
+}
+
 // void SEND_ACCEPTED(trader t, int id) {
 //     char buffer[BUFFER_LEN];
 //     snprintf(buffer, 49, "ACCEPTED %i;", id);
