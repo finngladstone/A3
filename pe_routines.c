@@ -22,6 +22,18 @@ void id_command(char * src, char * dest) {
     return;
 }
 
+order * find_trader_order(trader * t, int order_id) {
+    list_node* cursor = t->orders;
+    
+    while(cursor) {
+        if (cursor->data.order.order_id == order_id) {
+            return &cursor->data.order;
+        }
+    }
+
+    return NULL;
+}
+
 // void SEND_ACCEPTED(trader t, int id) {
 //     char buffer[BUFFER_LEN];
 //     snprintf(buffer, 49, "ACCEPTED %i;", id);
