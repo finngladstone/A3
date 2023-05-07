@@ -126,7 +126,7 @@ void parse_command(trader * t, char * command, list_node * product_head) {
     }
 
     else if (strcmp(word, "AMEND")) {
-        if (sscanf("AMEND %i %i %i", &order_id, &quantity, &unit_price) != 3) {
+        if (sscanf(command, "AMEND %i %i %i;", &order_id, &quantity, &unit_price) != 3) {
             ;// invalid
         }
 
@@ -138,11 +138,27 @@ void parse_command(trader * t, char * command, list_node * product_head) {
             // inavlid p
         }
 
-        
+        order * to_amend = find_trader_order(t, order_id);
+        if (to_amend == NULL) {
+            printf("Failed to find order ID %i\n", order_id);
+            exit(2);
+        }
+
+        /** Amend order */
+
+        to_amend->time = time;
+        to_amend->quantity = quantity;
+        to_amend->unit_cost = unit_price;
+
+        //SEND_ACCEPTED
+        //SEND_MARKET_UPDATE??
+        //CHECK_MATCH_AND_FILL
+
+        time++;
     } 
 
     else if (strcmp(word, "CANCEL")) {
-
+        
     }
 
     else {

@@ -104,5 +104,6 @@ list_node* list_find(list_node* h, const char* name);
 /** Helper functions */
 trader * find_trader(int pid, struct trader * traders, int n);
 void id_command(char * src, char * dest);
+order * find_trader_order(trader * t, int order_id);
 
 #endif 
