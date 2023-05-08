@@ -25,7 +25,8 @@ typedef struct list_node list_node;
 
 typedef enum {
     BUY,
-    SELL
+    SELL,
+    CANCEL
 } order_type;
 
 /** 
@@ -131,6 +132,6 @@ void receive_data(int fd, char * buffer);
 
 void SEND_STATUS(trader * t, int id, statuses s);
 void SEND_MARKET_OPEN(trader * traders, int n);
-void SEND_MARKET_UPDATE(trader * traders, int n, order o);
+void SEND_MARKET_UPDATE(trader * traders, int n, order o, trader * except);
 
 #endif 

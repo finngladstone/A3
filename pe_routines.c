@@ -99,7 +99,7 @@ void SEND_MARKET_OPEN(trader * traders, int n) {
     }
 }
 
-void SEND_MARKET_UPDATE(trader * traders, int n, order o) {
+void SEND_MARKET_UPDATE(trader * traders, int n, order o, trader * except) {
     char buffer[BUFFER_LEN] = {0};
     char * action;
 
@@ -110,13 +110,16 @@ void SEND_MARKET_UPDATE(trader * traders, int n, order o) {
         case SELL:
             action = "SELL";
             break;
+        case CANCEL:
+            action = "CANCEL";
+            break;
     }
 
     snprintf(buffer, BUFFER_LEN-1, "MARKET %s %s %i %i;", 
         action, o.product->name, o.quantity, o.unit_cost);
     
     for (int i = 0; i < n; i++) {
-        if (traders[i].online)
+        if (traders[i].online && &traders[i] != except)
             send_data(traders[i].outgoing_fd, buffer);
     }
 }

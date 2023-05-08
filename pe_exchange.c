@@ -16,7 +16,7 @@ void check_match(list_node * product_head) {
 
 }
 
-void parse_command(trader * t, char * command, list_node * product_head) {
+void parse_command(trader * t, char * command, list_node * product_head, trader * traders, int n) {
     // verbose
     printf("%s [T%d] Parsing command: %s\n", LOG_PREFIX, t->id, command);
 
@@ -84,7 +84,7 @@ void parse_command(trader * t, char * command, list_node * product_head) {
         SEND_STATUS(t, order_id, ACCEPTED);
 
         //SEND_MARKET_UPDATE
-        
+        SEND_MARKET_UPDATE(traders, n, o, t);
         //CHECK_MATCH_AND_FILL
 
     } 
@@ -133,6 +133,7 @@ void parse_command(trader * t, char * command, list_node * product_head) {
         SEND_STATUS(t, o.order_id, ACCEPTED);
 
         //SEND_MARKET_UPDATE
+        SEND_MARKET_UPDATE(traders, n, o, t);
         //CHECK_MATCH_AND_FILL
     }
 
@@ -165,6 +166,7 @@ void parse_command(trader * t, char * command, list_node * product_head) {
         SEND_STATUS(t, order_id, AMENDED);
 
         //SEND_MARKET_UPDATE??
+        SEND_MARKET_UPDATE(traders, n, *to_amend, t);
         //CHECK_MATCH_AND_FILL
 
         time++;
@@ -180,10 +182,20 @@ void parse_command(trader * t, char * command, list_node * product_head) {
             // invalid
         }
 
-        list_delete(&t->orders, to_cancel);
+        //update node to cancelled
+        order * o = &to_cancel->data.order;
+        o->type = CANCEL;
+        o->quantity = 0;
+        o->unit_cost = 0;
+
 
         //SEND_CONFIRM
         SEND_STATUS(t, order_id, CANCELLED);
+        //MARKET_UPDATE
+        SEND_MARKET_UPDATE(traders, n, *o, t);
+
+        // could remove this
+        list_delete(&t->orders, to_cancel);
 
     }
 
@@ -429,7 +441,7 @@ int main(int argc, char const *argv[])
             continue;
 
         receive_data(sender->incoming_fd, buffer);
-        parse_command(sender, buffer, products_ll);
+        parse_command(sender, buffer, products_ll, traders, argc-2);
     }
 
    /* Endgame
