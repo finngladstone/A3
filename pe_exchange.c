@@ -290,7 +290,7 @@ void launch(struct trader * t) {
         char id_string[3] = {0};
         snprintf(id_string, 2, "%d", t->id);
 
-        if (execl(t->path, id_string) == -1) {
+        if (execl(t->path, id_string, NULL) == -1) {
             perror("execl failed");
             exit(2);
         }

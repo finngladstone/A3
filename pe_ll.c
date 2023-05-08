@@ -120,6 +120,19 @@ void list_free(list_node* h) {
 
     while(cursor) {
         list_node * tmp = cursor->next;
+
+        // switch(cursor->type) {
+        //     case ORDER:
+        //         free(&cursor->data.order);
+        //         break;
+        //     case PRODUCT:
+        //         free(&cursor->data.product);
+        //         break;
+        //     case POSITION:
+        //         free(&cursor->data.position);
+        //         break;
+        // }
+        // free(&cursor->data);
         free(cursor);
         cursor = tmp;
     }
