@@ -138,3 +138,16 @@ list_node* list_find(list_node* h, const char* name) {
 
     return NULL; // If not found
 }
+
+list_node* list_get_tail(list_node* h) {
+    if (h == NULL) {
+        return NULL;
+    }
+
+    list_node* cursor = h;
+    while (cursor->next != NULL) {
+        cursor = cursor->next;
+    }
+
+    return cursor;
+}

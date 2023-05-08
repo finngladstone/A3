@@ -111,6 +111,7 @@ void list_delete(list_node** h, list_node* n);
 void list_free(list_node* h);
 list_node* list_find(list_node* h, const char* name);
 void list_add_sorted(list_node** h, void* data, data_type type);
+list_node* list_get_tail(list_node* h);
 
 /** Helper functions */
 
