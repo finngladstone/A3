@@ -12,9 +12,18 @@
 int who;
 int time;
 
-void check_match(product * p) {
+/** 
+     * 1) retrieve head of product sell LL (cheapest sell price)
+     * 2) retrieve tail of product buy orders (highest buy price)
+     * 3) if buy_price >= sell_price, match order
+     * 4) update position
+     * 5) 
+     */
 
-}
+// void check_match(product * p) {
+//     order * sell_order = p->sell_orders;
+    
+// }
 
 void parse_command(trader * t, char * command, list_node * product_head, trader * traders, int n) {
     // verbose

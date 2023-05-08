@@ -1,6 +1,6 @@
 CC=gcc
-# CFLAGS=-Wall -Werror -Wvla -O0 -std=c11 -g -fsanitize=address,leak
-CFLAGS=-Wall -Werror -Wvla -O0 -std=c11 -g
+CFLAGS=-Wall -Werror -Wvla -O0 -std=c11 -g -fsanitize=address,leak
+# CFLAGS=-Wall -Werror -Wvla -O0 -std=c11 -g
 LDFLAGS=-lm
 BINARIES=pe_exchange pe_trader
 LL_OBJ=pe_ll.o pe_routines.o
