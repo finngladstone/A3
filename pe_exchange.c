@@ -289,6 +289,7 @@ void launch(struct trader * t) {
         }
     } else {
         t->pid = pid;
+        t->online = 1;
     }
 
     return;
