@@ -9,17 +9,17 @@ trader * find_trader(int pid, struct trader * traders, int n) {
     return NULL;
 }
 
-void id_command(char * src, char * dest) {
+int id_command(char * src, char * dest) {
     
     int len = strcspn(src, " ");
 
     if (len > 6) 
-        dest = NULL;
+        return 0;
 
     strncpy(dest, src, len);
     dest[len] = '\0';
 
-    return;
+    return 1;
 }
 
 order * find_trader_order(trader * t, int order_id) {
@@ -123,3 +123,4 @@ void SEND_MARKET_UPDATE(trader * traders, int n, order o, trader * except) {
             send_data(traders[i].outgoing_fd, buffer);
     }
 }
+

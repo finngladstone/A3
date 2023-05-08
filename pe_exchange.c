@@ -35,10 +35,8 @@ void parse_command(trader * t, char * command, list_node * product_head, trader 
     char product_name[PRODUCT_LEN] = {0};
 
     char word[CMD_LEN];
-    id_command(command, word);
-
-    if (word == NULL) {
-        // invalid 
+    if (id_command(command, word) == 0) {
+        ; //invalid
     }
 
     if (strcmp(word, "BUY")) {
