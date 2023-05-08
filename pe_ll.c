@@ -16,21 +16,21 @@ list_node * list_init(void* data, data_type type) {
 
     switch(type) {
         case ORDER:
-            n->data.order = *(order*)data;
+            n->data.order = (order*)data;
             break;
         case PRODUCT:
-            n->data.product = *(product*)data;
+            n->data.product = (product*)data;
             break;
         case POSITION:
-            n->data.position = *(position*)data;
+            n->data.position = (position*)data;
             break;
     }
 
     n->next = NULL;
-    n->prev = NULL; // Add this line
+    n->prev = NULL;
     return n;
-    
 }
+
 
 list_node * list_next(list_node * n) {
     if (n == NULL) return NULL;
@@ -72,7 +72,7 @@ void list_add_sorted(list_node** h, void* data, data_type type) { // for order o
 
     while (cursor != NULL) {
         new_price = ((order*)data)->unit_cost;
-        cursor_price = cursor->data.order.unit_cost;
+        cursor_price = cursor->data.order->unit_cost;
 
         if (new_price <= cursor_price) {
             break;
@@ -115,26 +115,22 @@ void list_delete(list_node** h, list_node* n) {
     return;
 }
 
-void list_free(list_node* h) {
-    list_node * cursor = h;
 
-    while(cursor) {
-        list_node * tmp = cursor->next;
+void list_free(list_node* head) {
+    list_node* current = head;
+    list_node* temp;
+    
+    while (current != NULL) {
+        temp = current;
+        current = current->next;
+        
+        if (temp->type == PRODUCT) {
+            // Free the memory allocated for the product structs
+            free(temp->data.product);
+        }
 
-        // switch(cursor->type) {
-        //     case ORDER:
-        //         free(&cursor->data.order);
-        //         break;
-        //     case PRODUCT:
-        //         free(&cursor->data.product);
-        //         break;
-        //     case POSITION:
-        //         free(&cursor->data.position);
-        //         break;
-        // }
-        // free(&cursor->data);
-        free(cursor);
-        cursor = tmp;
+        // Free the memory allocated for the list_node
+        free(temp);
     }
 }
 
@@ -143,7 +139,7 @@ list_node* list_find(list_node* h, const char* name) {
     
     list_node* cursor = h;
     while (cursor) {
-        if (cursor->type == PRODUCT && strcmp(cursor->data.product.name, name) == 0) {
+        if (cursor->type == PRODUCT && strcmp(cursor->data.product->name, name) == 0) {
             return cursor;
         }
         cursor = cursor->next;

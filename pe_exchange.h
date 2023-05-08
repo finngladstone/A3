@@ -79,9 +79,9 @@ typedef struct position {
 } position;
 
 typedef union {
-    product product;
-    position position;
-    order order;
+    product* product;
+    position* position;
+    order* order;
 } node_data;
 
 typedef enum {

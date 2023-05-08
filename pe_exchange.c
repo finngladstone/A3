@@ -52,7 +52,7 @@ void parse_command(trader * t, char * command, list_node * product_head, trader 
         if (l == NULL) {
             SEND_STATUS(t, -1, INVALID);
         }
-        product * p = &l->data.product;
+        product * p = l->data.product;
 
         if (quantity < 1 || quantity > 999999) {
             SEND_STATUS(t, -1, INVALID);
@@ -109,7 +109,7 @@ void parse_command(trader * t, char * command, list_node * product_head, trader 
         if (l == NULL) {
             SEND_STATUS(t, -1, INVALID);
         }
-        product * p = &l->data.product;
+        product * p = l->data.product;
 
         if (quantity < 1 || quantity > 999999) {
             SEND_STATUS(t, -1, INVALID);
@@ -190,7 +190,7 @@ void parse_command(trader * t, char * command, list_node * product_head, trader 
         }
 
         //update node to cancelled
-        order * o = &to_cancel->data.order;
+        order * o = to_cancel->data.order;
         o->type = CANCEL;
         o->quantity = 0;
         o->unit_cost = 0;
@@ -250,9 +250,9 @@ list_node* init_products(const char * filename) {
     list_node* c = head;
     while(c){
         if (c->next == NULL)
-            printf("%s\n", c->data.product.name);
+            printf("%s\n", c->data.product->name);
         else   
-            printf("%s ", c->data.product.name);
+            printf("%s ", c->data.product->name);
         
         c = c->next;
     }
