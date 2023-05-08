@@ -8,7 +8,7 @@
 /** Constants */
 
 #define PATH_LEN 50
-#define BUFFER_LEN 50
+#define BUFFER_LEN 100
 #define CMD_LEN 7
 #define PRODUCT_LEN 17
 
@@ -44,6 +44,8 @@ typedef struct trader {
     list_node * positions; //ll
     int next_order_id;
 
+    int online;
+
 } trader;
 
 /** These structs will be used in LLs */
@@ -52,7 +54,7 @@ typedef struct product {
     list_node * buy_orders;
     list_node * sell_orders;
 
-    char name[BUFFER_LEN];
+    char name[PRODUCT_LEN];
 
 } product;
 
@@ -128,6 +130,7 @@ void send_data(int fd, char * message);
 void receive_data(int fd, char * buffer);
 
 void SEND_STATUS(trader * t, int id, statuses s);
-void MARKET_OPEN(trader * traders, int n);
+void SEND_MARKET_OPEN(trader * traders, int n);
+void SEND_MARKET_UPDATE(trader * traders, int n, order o);
 
 #endif 

@@ -12,6 +12,10 @@
 int who;
 int time;
 
+void check_match(list_node * product_head) {
+
+}
+
 void parse_command(trader * t, char * command, list_node * product_head) {
     // verbose
     printf("%s [T%d] Parsing command: %s\n", LOG_PREFIX, t->id, command);
@@ -80,6 +84,7 @@ void parse_command(trader * t, char * command, list_node * product_head) {
         SEND_STATUS(t, order_id, ACCEPTED);
 
         //SEND_MARKET_UPDATE
+        
         //CHECK_MATCH_AND_FILL
 
     } 
@@ -189,7 +194,6 @@ void parse_command(trader * t, char * command, list_node * product_head) {
 
 void signal_handler(int s, siginfo_t* sinfo, void * context) {
     who = sinfo->si_pid;
-    // [SPX] [T0] Parsing command: <BUY 0 GPU 30 500>
 }
 
 list_node* init_products(const char * filename) {
@@ -386,27 +390,14 @@ int main(int argc, char const *argv[])
     * 2. Create named pipes for each trader (>= n)
     * 3. Launch trader as child process, assign trader ID starting from 0
     * 4. After launching each binary, exchange and trader connect to FIFO
+    * 5. setup signals 
+    * 6. send MARKET_OPEN
     */
 
     list_node* products_ll = init_products(argv[1]); // get products
     struct trader * traders = get_traders(argc, argv); // get list of traders
 
     init_traders(traders, argc - 2); // create trader pipes, fork, fifo connects
-
-    /* Epoll setup */ 
-
-    // int epoll_fd;
-    // epoll_fd = init_epoll(traders, argc - 2);
-
-    // struct epoll_event * events = malloc(argc - 2 * sizeof(struct epoll_event));
-    
-    // while(1) {
-    //     int num_events = epoll_wait(epoll_fd, events, argc-2, -1);
-
-    //     for (int i = 0; i < num_events; i++) {
-
-    //     }
-    // }
 
     /* Signal handling */
 
@@ -420,7 +411,7 @@ int main(int argc, char const *argv[])
     }
     
 
-    MARKET_OPEN(traders, argc-2);
+    SEND_MARKET_OPEN(traders, argc-2);
 
     /** Main loop
      * 1) Wait for signal 
