@@ -12,7 +12,7 @@
 int who;
 int time;
 
-void check_match(list_node * product_head) {
+void check_match(product * p) {
 
 }
 
@@ -75,7 +75,7 @@ void parse_command(trader * t, char * command, list_node * product_head, trader 
         o.time = time;
 
         list_add(&t->orders, &o, ORDER);
-        list_add(&p->buy_orders, &o, ORDER);
+        list_add_sorted(&p->buy_orders, &o, ORDER);
 
         t->next_order_id++;
         time++;
@@ -124,7 +124,7 @@ void parse_command(trader * t, char * command, list_node * product_head, trader 
         o.time = time;
 
         list_add(&t->orders, &o, ORDER);
-        list_add(&p->sell_orders, &o, ORDER);
+        list_add_sorted(&p->sell_orders, &o, ORDER);
 
         t->next_order_id++;
         time++;
