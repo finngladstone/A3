@@ -96,7 +96,9 @@ void SEND_STATUS(trader * t, int id, statuses s) {
 void SEND_MARKET_OPEN(trader * traders, int n) {
     for (int i = 0; i < n; i++) {
         send_data(traders[i].outgoing_fd, "MARKET OPEN;");
+        kill(traders[i].pid, SIGUSR1);
     }
+
 }
 
 void SEND_MARKET_UPDATE(trader * traders, int n, order o, trader * except) {
@@ -119,8 +121,10 @@ void SEND_MARKET_UPDATE(trader * traders, int n, order o, trader * except) {
         action, o.product->name, o.quantity, o.unit_cost);
     
     for (int i = 0; i < n; i++) {
-        if (traders[i].online && &traders[i] != except)
+        if (traders[i].online && &traders[i] != except) {
             send_data(traders[i].outgoing_fd, buffer);
+            kill(traders[i].pid, SIGUSR1);
+        }
     }
 }
 
