@@ -97,6 +97,7 @@ typedef enum {
 
 typedef struct list_node {
     node_data data;
+    struct list_node* prev;
     struct list_node* next;
     data_type type;
 } list_node;

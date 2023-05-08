@@ -27,6 +27,7 @@ list_node * list_init(void* data, data_type type) {
     }
 
     n->next = NULL;
+    n->prev = NULL; // Add this line
     return n;
     
 }
@@ -34,6 +35,11 @@ list_node * list_init(void* data, data_type type) {
 list_node * list_next(list_node * n) {
     if (n == NULL) return NULL;
     return n->next;
+}
+
+list_node * list_prev(list_node * n) { // Add this function
+    if (n == NULL) return NULL;
+    return n->prev;
 }
 
 void list_add(list_node** h, void* data, data_type type) {
@@ -47,6 +53,7 @@ void list_add(list_node** h, void* data, data_type type) {
         cursor = cursor->next;
 
     cursor->next = list_init(data, type);
+    cursor->next->prev = cursor; // Add this line
 }
 
 void list_delete(list_node** h, list_node* n) {
@@ -54,6 +61,7 @@ void list_delete(list_node** h, list_node* n) {
     list_node* cursor = *h;
     if (*h == n) {
         *h = (*h)->next;
+        if (*h) (*h)->prev = NULL; // Add this line
         return;
     }
     while (cursor->next != n){
@@ -61,6 +69,7 @@ void list_delete(list_node** h, list_node* n) {
         cursor = cursor->next;
     }
     list_node* future = cursor->next->next;
+    if (future) future->prev = cursor; // Add this line
     free(cursor->next);
     cursor->next = future;
     return;
