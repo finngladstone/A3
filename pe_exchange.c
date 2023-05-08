@@ -287,13 +287,15 @@ void launch(struct trader * t) {
 
     if (pid == 0) { // child
         
-        char id_string[3] = {0};
-        snprintf(id_string, 2, "%d", t->id);
+        char id = t->id + '0';
 
-        if (execl(t->path, id_string, NULL) == -1) {
-            perror("execl failed");
-            exit(2);
-        }
+        char * child_args[] = {t->path, &id, NULL};
+
+        execv(child_args[0], child_args);
+
+        perror("execv");
+        exit(2);
+
     } else {
         t->pid = pid;
         t->online = 1;
