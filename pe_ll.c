@@ -56,6 +56,46 @@ void list_add(list_node** h, void* data, data_type type) {
     cursor->next->prev = cursor; // Add this line
 }
 
+void list_add_sorted(list_node** h, void* data, data_type type) { // for order only
+    if (*h == NULL) {
+        *h = list_init(data, type);
+        return;
+    }
+    
+    list_node * new_node = list_init(data, type);
+    
+    list_node* cursor = *h;
+    list_node* prev = NULL;
+
+    int new_price = 0;
+    int cursor_price = 0;
+
+    while (cursor != NULL) {
+        new_price = ((order*)data)->unit_cost;
+        cursor_price = cursor->data.order.unit_cost;
+
+        if (new_price <= cursor_price) {
+            break;
+        }
+
+        prev = cursor;
+        cursor = cursor->next;
+    }
+    
+    if (prev == NULL) {
+        new_node->next = *h;
+        (*h)->prev = new_node;
+        *h = new_node;
+    } else {
+        new_node->next = prev->next;
+        new_node->prev = prev;
+        if (prev->next != NULL) {
+            prev->next->prev = new_node;
+        }
+        prev->next = new_node;
+    }
+}
+
 void list_delete(list_node** h, list_node* n) {
     if (*h == NULL) return;
     list_node* cursor = *h;
