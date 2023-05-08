@@ -23,6 +23,11 @@ typedef struct order order;
 typedef struct trader trader;
 typedef struct list_node list_node;
 
+typedef enum {
+    BUY,
+    SELL
+} order_type;
+
 /** 
  * Database-like structs
 */
@@ -60,6 +65,7 @@ typedef struct order {
     int order_id;
 
     int time;
+    order_type type;
 
 } order;
 
@@ -115,7 +121,13 @@ trader * find_trader(int pid, struct trader * traders, int n);
 void id_command(char * src, char * dest);
 order * find_trader_order(trader * t, int order_id);
 list_node * find_order_listnode(trader * t, int id);
+
+/** Comms */
+
 void send_data(int fd, char * message);
+void receive_data(int fd, char * buffer);
+
 void SEND_STATUS(trader * t, int id, statuses s);
+void MARKET_OPEN(trader * traders, int n);
 
 #endif 

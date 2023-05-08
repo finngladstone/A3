@@ -54,6 +54,19 @@ void send_data(int fd, char * message) {
     }
 }
 
+void receive_data(int fd, char * buffer) {
+    ssize_t n_read;
+
+    if ((n_read = read(fd, buffer, BUFFER_LEN)) == 1) {
+        perror("receive_data failed");
+        exit(2);
+    }
+
+    buffer[n_read] = '\0';
+}
+
+/** Comms commands  */
+
 void SEND_STATUS(trader * t, int id, statuses s) {
     
     char * status;
@@ -78,4 +91,10 @@ void SEND_STATUS(trader * t, int id, statuses s) {
     send_data(t->outgoing_fd, buffer);
 
     kill(t->pid, SIGUSR1);
+}
+
+void MARKET_OPEN(trader * traders, int n) {
+    for (int i = 0; i < n; i++) {
+        send_data(traders[i].outgoing_fd, "MARKET OPEN;");
+    }
 }

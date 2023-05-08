@@ -63,6 +63,7 @@ void parse_command(trader * t, char * command, list_node * product_head) {
 
         o.broker = t;
         o.product = p;
+        o.type = BUY;
 
         o.quantity = quantity;
         o.unit_cost = unit_price;
@@ -110,6 +111,7 @@ void parse_command(trader * t, char * command, list_node * product_head) {
 
         o.broker = t;
         o.product = p;
+        o.type = SELL;
 
         o.quantity = quantity;
         o.unit_cost = unit_price;
@@ -375,6 +377,8 @@ int main(int argc, char const *argv[])
         return 2;
     }
 
+    char buffer[BUFFER_LEN];
+
     printf("%s Starting\n", LOG_PREFIX); 
        
    /* Start-up 
@@ -410,8 +414,13 @@ int main(int argc, char const *argv[])
     s.sa_flags |= SA_SIGINFO;
 
     s.sa_sigaction = signal_handler; // could block other signals at this point
+    if (sigaction(SIGUSR1, &s, NULL) == -1) {
+        perror("Failed to bind signal_handler to sigaction struct");
+        exit(2);
+    }
+    
 
-    // MARKET_OPEN(traders, argc-2);
+    MARKET_OPEN(traders, argc-2);
 
     /** Main loop
      * 1) Wait for signal 
@@ -422,10 +431,15 @@ int main(int argc, char const *argv[])
      * 5) Update and communicate back to traders
      */
 
-    // while(1) {
-    //     pause(); 
-    // 
-    // }
+    while(1) {
+        pause(); 
+        trader * sender = find_trader(who, traders, argc-2);
+        if (sender == NULL)
+            continue;
+
+        receive_data(sender->incoming_fd, buffer);
+        parse_command(sender, buffer, products_ll);
+    }
 
    /* Endgame
     * - Print [PEX] Trader <Trader ID> disconnected
