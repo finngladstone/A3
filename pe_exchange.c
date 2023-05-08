@@ -235,7 +235,7 @@ list_node* init_products(const char * filename) {
     int i;
     for (i = 0; i < n; i++) {
         fgets(buffer, BUFFER_LEN, myfile);
-        buffer[strlen(buffer)-2] = '\0';
+        buffer[strlen(buffer)-1] = '\0';
 
         product * p = calloc(1, sizeof(product));
         strcpy(p->name, buffer);
