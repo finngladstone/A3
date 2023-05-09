@@ -370,14 +370,17 @@ struct trader* get_traders(int argc, char const *argv[], list_node * product_ll)
         strcpy(traders[i-2].path, argv[i]);
         traders[i-2].next_order_id = 0;
         traders[i-2].orders = NULL;
+        traders[i-2].positions = NULL;
 
         list_node * cursor = product_ll;
-        while (product_ll != NULL) {
+        while (cursor != NULL) {
             position * p = calloc(1, sizeof(position));
             p->item = *cursor->data.product;
             p->broker = traders[i-2];
 
             list_add(&traders[i-2].positions, p, POSITION);
+
+            cursor = cursor->next;
         }
     }
 
