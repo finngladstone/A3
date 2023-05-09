@@ -20,10 +20,97 @@ int time;
      * 5) 
      */
 
-// void check_match(product * p) {
-//     order * sell_order = p->sell_orders;
+void check_match(product * p) {
+    list_node * sell_cursor = p->sell_orders;
+    list_node * buy_cursor = list_get_tail(p->buy_orders);
+
+    order * sell;
+    order * buy;
+
+    position * seller_pos;
+    position * buyer_pos;
+
+    while (sell_cursor && buy_cursor) {
+
+        sell = sell_cursor->data.order;
+        buy = buy_cursor->data.order;
+
+        if (buy->unit_cost < sell->unit_cost) 
+            break;
+
+        seller_pos = find_position(sell->broker, p);
+        buyer_pos = find_position(buy->broker, p);
+
+        int quantity_sold;
+        int value;
+
+        if (buy->quantity == sell->quantity) {
+
+            // update position quantities
+            quantity_sold = buy->quantity;
+
+            // update position values
+            value = buy->quantity * sell->unit_cost;
+
+            //update cursors 
+            sell_cursor = sell_cursor->next;
+            buy_cursor = buy_cursor->next;
+
+            // delete fulfilled orders
+            list_delete(&p->sell_orders, sell_cursor->prev);
+            list_delete(&p->buy_orders, buy_cursor->prev);
+            
+        } 
+
+        else if (buy->quantity < sell->quantity) {
+
+            // update positions
+            int quantity_sold = buy->quantity;
+
+            value = quantity_sold * sell->unit_cost;
+            
+            sell->quantity -= quantity_sold;
+
+            //update cursors - dont move next sold cursor -- GOING BACKWARDS IN BUY ORDERS
+            buy_cursor = buy_cursor->prev;
+
+            // delete fulfilled BUY ORDER
+            list_delete(&p->buy_orders, buy_cursor->next);
+
+        } 
+
+        else if (buy->quantity > sell->quantity) {
+            
+            //update positions q
+            quantity_sold = sell->quantity;
+            
+
+            //update pos value
+            value = quantity_sold * sell->unit_cost;
+            
+            buy->quantity -= quantity_sold;
+
+            //update cursor - dont move buy cursor as unfulfilled
+            sell_cursor = sell_cursor->next;
+
+            // delete fulfilled SELL ORDER
+            list_delete(&p->sell_orders, sell_cursor->prev);
+        }
+
+        seller_pos->quantity -= quantity_sold;
+        buyer_pos->quantity += quantity_sold;
+
+        seller_pos->value += value;
+        buyer_pos->value -= value;
+
+        SEND_FILL(sell->broker, sell, quantity_sold);
+        SEND_FILL(buy->broker, buy, quantity_sold);
+        
+    }
+
+    return;
     
-// }
+}
 
 void parse_command(trader * t, char * command, list_node * product_head, trader * traders, int n) {
     // verbose
@@ -90,9 +177,12 @@ void parse_command(trader * t, char * command, list_node * product_head, trader 
         //SEND_ACCEPTED
         SEND_STATUS(t, order_id, ACCEPTED);
 
+        //CHECK_MATCH_AND_FILL
+        check_match(o.product);
+
         //SEND_MARKET_UPDATE
         SEND_MARKET_UPDATE(traders, n, o, t);
-        //CHECK_MATCH_AND_FILL
+        
 
     } 
 
@@ -139,9 +229,12 @@ void parse_command(trader * t, char * command, list_node * product_head, trader 
         //SEND_ACCEPTED
         SEND_STATUS(t, o.order_id, ACCEPTED);
 
+        //CHECK_MATCH_AND_FILL
+        check_match(o.product);
+
         //SEND_MARKET_UPDATE
         SEND_MARKET_UPDATE(traders, n, o, t);
-        //CHECK_MATCH_AND_FILL
+        
     }
 
     else if (strcmp(word, "AMEND")) {
@@ -172,9 +265,12 @@ void parse_command(trader * t, char * command, list_node * product_head, trader 
         //SEND_ACCEPTED
         SEND_STATUS(t, order_id, AMENDED);
 
+        //CHECK_MATCH_AND_FILL
+        check_match(to_amend->product);
+
         //SEND_MARKET_UPDATE??
         SEND_MARKET_UPDATE(traders, n, *to_amend, t);
-        //CHECK_MATCH_AND_FILL
+        
 
         time++;
     } 
@@ -191,7 +287,7 @@ void parse_command(trader * t, char * command, list_node * product_head, trader 
 
         //update node to cancelled
         order * o = to_cancel->data.order;
-        o->type = CANCEL;
+        // o->type = CANCEL;
         o->quantity = 0;
         o->unit_cost = 0;
 
@@ -203,11 +299,16 @@ void parse_command(trader * t, char * command, list_node * product_head, trader 
 
         // could remove this
         list_delete(&t->orders, to_cancel);
+        if (o->type == BUY) {
+            list_delete(&o->product->buy_orders, to_cancel);
+        } else if (o->type == SELL) {
+            list_delete(&o->product->sell_orders, to_cancel);
+        }
 
     }
 
     else {
-
+        send_data(t->outgoing_fd, "INVALID;");
     }
 }
 
@@ -261,7 +362,7 @@ list_node* init_products(const char * filename) {
     return head;
 }
 
-struct trader* get_traders(int argc, char const *argv[]) {
+struct trader* get_traders(int argc, char const *argv[], list_node * product_ll) {
     struct trader * traders = malloc((argc - 2) * sizeof(struct trader));
 
     for (int i = 2; i < argc; i++) {
@@ -269,6 +370,15 @@ struct trader* get_traders(int argc, char const *argv[]) {
         strcpy(traders[i-2].path, argv[i]);
         traders[i-2].next_order_id = 0;
         traders[i-2].orders = NULL;
+
+        list_node * cursor = product_ll;
+        while (product_ll != NULL) {
+            position * p = calloc(1, sizeof(position));
+            p->item = *cursor->data.product;
+            p->broker = traders[i-2];
+
+            list_add(&traders[i-2].positions, p, POSITION);
+        }
     }
 
     return traders;
@@ -386,9 +496,20 @@ int init_epoll(struct trader * traders, int len) {
     return epoll_instance;
 }
 
+/** Cleanup functions */
+
 void close_fifos(struct trader * t) {
     close(t->incoming_fd);
     close(t->outgoing_fd);
+}
+
+void free_trader_resources(trader * traders, int n) {
+    for (int i = 0; i < n; i++) {
+        trader * t = &traders[i];
+
+        list_free(t->orders);
+        list_free(t->positions);
+    }
 }
 
 /** Main
@@ -417,7 +538,7 @@ int main(int argc, char const *argv[])
     */
 
     list_node* products_ll = init_products(argv[1]); // get products
-    struct trader * traders = get_traders(argc, argv); // get list of traders
+    struct trader * traders = get_traders(argc, argv, products_ll); // get list of traders
 
     init_traders(traders, argc - 2); // create trader pipes, fork, fifo connects
 
@@ -471,6 +592,7 @@ int main(int argc, char const *argv[])
     /* Free memory */
 
     list_free(products_ll); 
+    free_trader_resources(traders, argc-2);
     free(traders);
     // free(events);
 

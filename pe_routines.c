@@ -128,3 +128,26 @@ void SEND_MARKET_UPDATE(trader * traders, int n, order o, trader * except) {
     }
 }
 
+void SEND_FILL(trader * t, order * o, int quantity) {
+    char buffer[BUFFER_LEN] = {0};
+    snprintf(buffer, BUFFER_LEN-1, "FILL %i %i;", o->order_id, quantity);
+
+    send_data(t->outgoing_fd, buffer);
+    kill(t->pid, SIGUSR1);
+}
+
+position * find_position(trader * t, product * p) {
+    list_node* cursor = t->positions;
+
+    if (cursor == NULL) return NULL;
+
+    while (cursor) {
+        if (&cursor->data.position->item == p)
+            return cursor->data.position;  
+
+        cursor = cursor->next; 
+    }
+
+    return NULL;
+}
+

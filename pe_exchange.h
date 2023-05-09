@@ -76,6 +76,7 @@ typedef struct position {
     trader broker;
     product item;
     int value; 
+    int quantity;
 } position;
 
 typedef union {
@@ -127,6 +128,7 @@ trader * find_trader(int pid, struct trader * traders, int n);
 int id_command(char * src, char * dest);
 order * find_trader_order(trader * t, int order_id);
 list_node * find_order_listnode(trader * t, int id);
+position * find_position(trader * t, product * p);
 
 /** Comms */
 
@@ -136,5 +138,6 @@ void receive_data(int fd, char * buffer);
 void SEND_STATUS(trader * t, int id, statuses s);
 void SEND_MARKET_OPEN(trader * traders, int n);
 void SEND_MARKET_UPDATE(trader * traders, int n, order o, trader * except);
+void SEND_FILL(trader * t, order * o, int quantity);
 
 #endif 
