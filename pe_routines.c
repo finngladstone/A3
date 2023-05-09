@@ -2,7 +2,7 @@
 
 trader * find_trader(int pid, struct trader * traders, int n) {
     for (int i = 0; i < n; i++) {
-        if (&traders[i].pid == &pid)
+        if (traders[i].pid == pid)
             return &traders[i];
     }
 
