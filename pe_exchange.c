@@ -8,8 +8,6 @@
  */
 
 //global
-
-int who;
 int time;
 
 /** 
@@ -301,7 +299,7 @@ void parse_command(trader * t, char * command, list_node * product_head, trader 
         list_delete(&t->orders, to_cancel);
         if (o->type == BUY) {
             list_delete(&o->product->buy_orders, to_cancel);
-        } else if (o->type == SELL) {
+        } else if (o->type == SELL) { 
             list_delete(&o->product->sell_orders, to_cancel);
         }
 
@@ -310,10 +308,6 @@ void parse_command(trader * t, char * command, list_node * product_head, trader 
     else {
         send_data(t->outgoing_fd, "INVALID;");
     }
-}
-
-void signal_handler(int s, siginfo_t* sinfo, void * context) {
-    who = sinfo->si_pid;
 }
 
 list_node* init_products(const char * filename) {
@@ -457,7 +451,7 @@ void init_traders(struct trader * traders, int n) {
         /* Connect to pipes */
 
         int outgoing_fd = open(fifo_path_exchange, O_WRONLY);
-        // fcntl(outgoing_fd, F_SETFL, O_NONBLOCK);
+        fcntl(outgoing_fd, F_SETFL, O_NONBLOCK | O_WRONLY);
 
         if (outgoing_fd == -1) {
             perror("Open exchange FIFO");
@@ -467,7 +461,7 @@ void init_traders(struct trader * traders, int n) {
         printf("%s Connected to %s\n", LOG_PREFIX, fifo_path_exchange);
 
         int incoming_fd = open(fifo_path_trader, O_RDONLY);
-        // fcntl(incoming_fd, F_SETFL, O_NONBLOCK);
+        fcntl(incoming_fd, F_SETFL, O_NONBLOCK | O_RDONLY);
 
         if (incoming_fd == -1) {
             perror("Open trader FIFO");
@@ -547,15 +541,24 @@ int main(int argc, char const *argv[])
 
     /* Signal handling */
 
-    struct sigaction s = {0};
-    s.sa_flags |= SA_SIGINFO;
+    // struct sigaction s = {0};
+    // s.sa_flags |= SA_SIGINFO;
 
-    s.sa_sigaction = signal_handler; // could block other signals at this point
-    if (sigaction(SIGUSR1, &s, NULL) == -1) {
-        perror("Failed to bind signal_handler to sigaction struct");
-        exit(2);
-    }
+    // s.sa_sigaction = sigusr_handler; // could block other signals at this point
+    // if (sigaction(SIGUSR1, &s, NULL) == -1) {
+    //     perror("Failed to bind signal_handler to sigaction struct");
+    //     exit(2);
+    // }
+
+    sigset_t set;
+    siginfo_t info;
+    int sig;
+
+    sigemptyset(&set);
+    sigaddset(&set, SIGUSR1);
+    sigaddset(&set, SIGCHLD);   
     
+    sigprocmask(SIG_BLOCK, &set, NULL);
 
     SEND_MARKET_OPEN(traders, argc-2);
 
@@ -567,15 +570,29 @@ int main(int argc, char const *argv[])
      * 4) parse command
      * 5) Update and communicate back to traders
      */
+    int pid;
 
     while(1) {
-        pause(); 
-        trader * sender = find_trader(who, traders, argc-2);
-        if (sender == NULL)
-            continue;
 
-        receive_data(sender->incoming_fd, buffer);
-        parse_command(sender, buffer, products_ll, traders, argc-2);
+        sig = sigwaitinfo(&set, &info);
+    
+        if (sig == -1) {
+            perror("sigwaitinfo");
+        } else {
+            if (sig == SIGUSR1) {
+                pid = info.si_pid;
+
+                trader * sender = find_trader(pid, traders, argc-2);
+                if (sender == NULL)
+                    continue;
+
+                receive_data(sender->incoming_fd, buffer);
+                parse_command(sender, buffer, products_ll, traders, argc-2);
+
+            } else if (sig == SIGCHLD) {
+
+            }
+        }
     }
 
    /* Endgame
