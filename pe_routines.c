@@ -55,11 +55,16 @@ void send_data(int fd, char * message) {
 }
 
 void receive_data(int fd, char * buffer) {
+
     ssize_t n_read;
 
     if ((n_read = read(fd, buffer, BUFFER_LEN)) == 1) {
         perror("receive_data failed");
         exit(2);
+    }
+
+    if (buffer[n_read-1] == ';') {
+        buffer[n_read-1] = '\0';
     }
 
     buffer[n_read] = '\0';

@@ -25,41 +25,54 @@ int time;
     
 // }
 
-void parse_command(trader * t, char * command, list_node * product_head, trader * traders, int n) {
+void parse_command(trader * t, char command[], list_node * product_head, trader * traders, int n) {
     // verbose
-    printf("%s [T%d] Parsing command: %s\n", LOG_PREFIX, t->id, command);
+    printf("%s [T%d] Parsing command: <%s>\n", LOG_PREFIX, t->id, command);
 
     int order_id;
     int quantity;
     int unit_price;
     char product_name[PRODUCT_LEN] = {0};
+	
 
     char word[CMD_LEN];
     if (id_command(command, word) == 0) {
-        ; //invalid
+        printf("%s Failed to ID command: <%s>\n", LOG_PREFIX, command);
     }
 
     if (strcmp(word, "BUY")) {
-        if (sscanf(command, "BUY %i %49[^\n] %i %i;", &order_id, product_name, &quantity, &unit_price) != 4) { 
+        if (sscanf(command, "BUY %i %s %i %i", &order_id, product_name, &quantity, &unit_price) != 4) {
+			printf("%s Invalid command format: <%s>\n", LOG_PREFIX , command); 
+
             SEND_STATUS(t, -1, INVALID);
+			return;
         }
 
         if (order_id != t->next_order_id) {
+			printf("%s Order ID %i invalid\n", LOG_PREFIX, order_id);
             SEND_STATUS(t, -1, INVALID);
+			return;
         }
 
         list_node * l = list_find(product_head, product_name);
         if (l == NULL) {
+			printf("%s Invalid product name: <%s>\n", LOG_PREFIX ,product_name);
             SEND_STATUS(t, -1, INVALID);
+			return;
         }
+
         product * p = l->data.product;
 
         if (quantity < 1 || quantity > 999999) {
+			printf("%s Invalid quantity: <%i>\n", LOG_PREFIX, quantity);
             SEND_STATUS(t, -1, INVALID);
+			return;
         }
 
         if (unit_price < 1 || unit_price > 999999) {
+			printf("%s Invalid price <$%i>\n", LOG_PREFIX, unit_price);
             SEND_STATUS(t, -1, INVALID);
+			return;
         }
 
         /** order is valid
@@ -97,26 +110,37 @@ void parse_command(trader * t, char * command, list_node * product_head, trader 
     } 
 
     else if (strcmp(word, "SELL")) {
-        if (sscanf(command, "SELL %i %49[^\n] %i %i;", &order_id, product_name, &quantity, &unit_price) != 4) {
+        if (sscanf(command, "SELL %i %s %i %i", &order_id, product_name, &quantity, &unit_price) != 4) {
+			printf("%s Invalid command format: <%s>\n", LOG_PREFIX , command); 
             SEND_STATUS(t, -1, INVALID);
+			return;
         }
 
         if (order_id != t->next_order_id) {
+			printf("%s Order ID %i invalid\n", LOG_PREFIX, order_id);
             SEND_STATUS(t, -1, INVALID);
+			return;
         }
 
         list_node * l = list_find(product_head, product_name);
         if (l == NULL) {
-            SEND_STATUS(t, -1, INVALID);
+            printf("%s Invalid product name: <%s>\n", LOG_PREFIX ,product_name);
+			SEND_STATUS(t, -1, INVALID);
+			return;
+
         }
-        product * p = l->data.product;
+        product * p = (product *)l->data.product;
 
         if (quantity < 1 || quantity > 999999) {
+			printf("%s Invalid quantity: <%i>\n", LOG_PREFIX, quantity);
             SEND_STATUS(t, -1, INVALID);
+			return;
         }
 
         if (unit_price < 1 || unit_price > 999999) {
+			printf("%s Invalid price <$%i>\n", LOG_PREFIX, unit_price);
             SEND_STATUS(t, -1, INVALID);
+			return;
         }
 
         order o = {0};
@@ -145,16 +169,22 @@ void parse_command(trader * t, char * command, list_node * product_head, trader 
     }
 
     else if (strcmp(word, "AMEND")) {
-        if (sscanf(command, "AMEND %i %i %i;", &order_id, &quantity, &unit_price) != 3) {
-            
+        if (sscanf(command, "AMEND %i %i %i", &order_id, &quantity, &unit_price) != 3) {
+            printf("%s Invalid command format: <%s>\n", LOG_PREFIX , command); 
+			SEND_STATUS(t, -1, INVALID);
+			return;
         }   
 
         if (quantity < 1 || quantity > 999999) {
-            // invalid q
+			printf("%s Invalid quantity: <%i>\n", LOG_PREFIX, quantity);
+            SEND_STATUS(t, -1, INVALID);
+			return;
         }
 
         if (unit_price < 1 || unit_price > 999999) {
-            // inavlid p
+			printf("%s Invalid price <$%i>\n", LOG_PREFIX, unit_price);
+            SEND_STATUS(t, -1, INVALID);
+			return;
         }
 
         order * to_amend = find_trader_order(t, order_id);
@@ -180,13 +210,17 @@ void parse_command(trader * t, char * command, list_node * product_head, trader 
     } 
 
     else if (strcmp(word, "CANCEL")) {
-        if (sscanf(command, "CANCEL %i;", &order_id) != 1) {
-            ;//invalid
+        if (sscanf(command, "CANCEL %i", &order_id) != 1) {
+            printf("%s Invalid command format: <%s>\n", LOG_PREFIX , command); 
+			SEND_STATUS(t, -1, INVALID);
+			return;
         }
 
         list_node * to_cancel = find_order_listnode(t, order_id);
         if (to_cancel == NULL) {
-            // invalid
+			printf("%s Order ID %i invalid\n", LOG_PREFIX, order_id);
+            SEND_STATUS(t, -1, INVALID);
+			return;
         }
 
         //update node to cancelled
@@ -269,6 +303,7 @@ struct trader* get_traders(int argc, char const *argv[]) {
         strcpy(traders[i-2].path, argv[i]);
         traders[i-2].next_order_id = 0;
         traders[i-2].orders = NULL;
+		traders[i-2].positions = NULL;
     }
 
     return traders;
@@ -290,6 +325,8 @@ void launch(struct trader * t) {
         char id = t->id + '0';
 
         char * child_args[] = {t->path, &id, NULL};
+
+		// dup2(STDOUT_FILENO, STDOUT_FILENO);
 
         execv(child_args[0], child_args);
 
@@ -398,6 +435,7 @@ void close_fifos(struct trader * t) {
 
 int main(int argc, char const *argv[])
 {
+
     if (argc < 2) {
         printf("Invalid launch options\n");
         return 2;
@@ -443,6 +481,8 @@ int main(int argc, char const *argv[])
      * 4) parse command
      * 5) Update and communicate back to traders
      */
+
+	// sleep(1);
 
     while(1) {
         pause(); 
