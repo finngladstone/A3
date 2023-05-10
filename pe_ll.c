@@ -74,7 +74,7 @@ void list_add_sorted(list_node** h, void* data, data_type type) { // for order o
         new_price = ((order*)data)->unit_cost;
         cursor_price = cursor->data.order->unit_cost;
 
-        if (new_price <= cursor_price) {
+        if (new_price < cursor_price) {
             break;
         }
 

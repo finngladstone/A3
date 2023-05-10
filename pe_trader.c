@@ -124,7 +124,7 @@ int main(int argc, char ** argv) {
     //     kill(parent_id, SIGUSR1);
     // }
 
-	printf("[T] parent id = %i\n", parent_id);
+	// printf("[T] parent id = %i\n", parent_id);
 
 	write_data(fd_write, "HELLO WORLD");
 	kill(parent_id, SIGUSR1);

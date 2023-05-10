@@ -13,14 +13,107 @@ int who;
 int time;
 
 /** 
-     * 1) retrieve head of product sell LL (cheapest sell price)
-     * 2) retrieve tail of product buy orders (highest buy price)
-     * 3) if buy_price >= sell_price, match order
-     * 4) update position
-     * 5) 
-     */
+ * ORDER MATCHING
+ * 1) retrieve head of product sell LL (cheapest sell price)
+ * 2) retrieve tail of product buy orders (highest buy price)
+ * 3) if buy_price >= sell_price, match order
+ * 4) update position
+ * 5) 
+ */
 
 
+
+void check_match(product * p) {
+    list_node * sell_cursor = p->sell_orders;
+    list_node * buy_cursor = list_get_tail(p->buy_orders);
+
+    order * sell;
+    order * buy;
+
+    position * seller_pos;
+    position * buyer_pos;
+
+    while (sell_cursor && buy_cursor) {
+
+        sell = sell_cursor->data.order;
+        buy = buy_cursor->data.order;
+
+        if (buy->unit_cost < sell->unit_cost) 
+            break;
+
+        seller_pos = find_position(sell->broker, p);
+        buyer_pos = find_position(buy->broker, p);
+
+        int quantity_sold;
+        int value;
+
+        if (buy->quantity == sell->quantity) {
+
+            // update position quantities
+            quantity_sold = buy->quantity;
+
+            // update position values
+            value = buy->quantity * sell->unit_cost;
+
+            //update cursors 
+            sell_cursor = sell_cursor->next;
+            buy_cursor = buy_cursor->next;
+
+            // delete fulfilled orders
+            list_delete(&p->sell_orders, sell_cursor->prev);
+            list_delete(&p->buy_orders, buy_cursor->prev);
+            
+        } 
+
+        else if (buy->quantity < sell->quantity) {
+
+            // update positions
+            int quantity_sold = buy->quantity;
+
+            value = quantity_sold * sell->unit_cost;
+            
+            sell->quantity -= quantity_sold;
+
+            //update cursors - dont move next sold cursor -- GOING BACKWARDS IN BUY ORDERS
+            buy_cursor = buy_cursor->prev;
+
+            // delete fulfilled BUY ORDER
+            list_delete(&p->buy_orders, buy_cursor->next);
+
+        } 
+
+        else if (buy->quantity > sell->quantity) {
+            
+            //update positions q
+            quantity_sold = sell->quantity;
+            
+
+            //update pos value
+            value = quantity_sold * sell->unit_cost;
+            
+            buy->quantity -= quantity_sold;
+
+            //update cursor - dont move buy cursor as unfulfilled
+            sell_cursor = sell_cursor->next;
+
+            // delete fulfilled SELL ORDER
+            list_delete(&p->sell_orders, sell_cursor->prev);
+        }
+
+        seller_pos->quantity -= quantity_sold;
+        buyer_pos->quantity += quantity_sold;
+
+        seller_pos->value += value;
+        buyer_pos->value -= value;
+
+        SEND_FILL(sell->broker, sell, quantity_sold);
+        SEND_FILL(buy->broker, buy, quantity_sold);
+        
+    }
+
+    return;
+    
+}
 
 void parse_command(trader * t, char * command, list_node * product_head, trader * traders, int n) {
     // verbose
@@ -298,9 +391,12 @@ struct trader* get_traders(int argc, char const *argv[], list_node * product_ll)
     for (int i = 2; i < argc; i++) {
         traders[i-2].id = i-2;
         strcpy(traders[i-2].path, argv[i]);
+        
         traders[i-2].next_order_id = 0;
         traders[i-2].orders = NULL;
 		traders[i-2].positions = NULL;
+
+        traders[i-2].online = 0;
 
         list_node * product_node = product_ll;
         while(product_node != NULL) {
@@ -330,13 +426,13 @@ void launch(struct trader * t) {
     }
 
     if (pid == 0) { // child
-        
-        char id = t->id + '0';
+        // THIS WILL SHIT ON >9 traders
+        char id = t->id + '0'; 
 
         char * child_args[] = {t->path, &id, NULL};
 
 		// dup2(STDOUT_FILENO, STDOUT_FILENO);
-
+        t->online = 1;
         execv(child_args[0], child_args);
 
         perror("execv");
@@ -515,11 +611,17 @@ int main(int argc, char const *argv[])
     for (int i = 0; i < argc-2; i++) {
         struct trader t = traders[i];
         close_fifos(&t);
+        list_free(t.orders);
+        list_free(t.positions);
     }
 
     /* Free memory */
 
     list_free(products_ll); 
+    
+    /** Free each trader position + order*/
+
+
     free(traders);
     // free(events);
 
