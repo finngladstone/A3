@@ -14,7 +14,6 @@ build/
 !*.c
 !*.h
 !*.lst
-!Makefile
 
 !*.txt
 !*.md
