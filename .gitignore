@@ -30,3 +30,4 @@ build/
 # https://git-scm.com/docs/gitignore
 # https://www.atlassian.com/git/tutorials/saving-changes/gitignore
 # https://jasonstitt.com/gitignore-whitelisting-patterns
+Makefile
