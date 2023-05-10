@@ -73,8 +73,8 @@ typedef struct order {
 } order;
 
 typedef struct position {
-    trader broker;
-    product item;
+    trader * broker;
+    product * item;
     int value; 
     int quantity;
 } position;

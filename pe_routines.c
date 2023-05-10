@@ -147,7 +147,7 @@ position * find_position(trader * t, product * p) {
     if (cursor == NULL) return NULL;
 
     while (cursor) {
-        if (&cursor->data.position->item == p)
+        if (&cursor->data.position->item == &p)
             return cursor->data.position;  
 
         cursor = cursor->next; 

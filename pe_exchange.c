@@ -20,10 +20,7 @@ int time;
      * 5) 
      */
 
-// void check_match(product * p) {
-//     order * sell_order = p->sell_orders;
-    
-// }
+
 
 void parse_command(trader * t, char * command, list_node * product_head, trader * traders, int n) {
     // verbose
@@ -36,7 +33,9 @@ void parse_command(trader * t, char * command, list_node * product_head, trader 
     char word[CMD_LEN];
 
     if (id_command(command, word) == 0) {
-        printf("%s Failed to ID command: <%s>\n", LOG_PREFIX, command);
+        printf("%s Invalid command: <%s>\n", LOG_PREFIX, command);
+        SEND_STATUS(t, -1, INVALID);
+        return;
     }
 
     if (strcmp(word, "BUY") == 0) {
@@ -236,6 +235,10 @@ void parse_command(trader * t, char * command, list_node * product_head, trader 
         // could remove this
         list_delete(&t->orders, to_cancel);
 
+    } else {
+        printf("%s Invalid command: <%s>\n", LOG_PREFIX, command);
+        SEND_STATUS(t, -1, INVALID);
+        return;
     }
 }
 
@@ -289,7 +292,7 @@ list_node* init_products(const char * filename) {
     return head;
 }
 
-struct trader* get_traders(int argc, char const *argv[]) {
+struct trader* get_traders(int argc, char const *argv[], list_node * product_ll) {
     struct trader * traders = malloc((argc - 2) * sizeof(struct trader));
 
     for (int i = 2; i < argc; i++) {
@@ -298,6 +301,17 @@ struct trader* get_traders(int argc, char const *argv[]) {
         traders[i-2].next_order_id = 0;
         traders[i-2].orders = NULL;
 		traders[i-2].positions = NULL;
+
+        list_node * product_node = product_ll;
+        while(product_node != NULL) {
+            position * p = malloc(sizeof(position));
+            p->broker = &traders[i-2];
+            p->item = product_node->data.product;
+            p->value = 0;
+            p->quantity = 0;
+
+            list_add(&traders[i-2].positions, p, POSITION);
+        }
     }
 
     return traders;
@@ -449,7 +463,7 @@ int main(int argc, char const *argv[])
     */
 
     list_node* products_ll = init_products(argv[1]); // get products
-    struct trader * traders = get_traders(argc, argv); // get list of traders
+    struct trader * traders = get_traders(argc, argv, products_ll); // get list of traders
 
     init_traders(traders, argc - 2); // create trader pipes, fork, fifo connects
 
