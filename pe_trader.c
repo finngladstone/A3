@@ -50,7 +50,7 @@ int main(int argc, char ** argv) {
     int parent_id = getppid();
 
     char buffer[BUFFER_SIZE] = {0};
-    int order_id = 0;
+    //int order_id = 0;
 
     /* FIFO filename setup */
 
@@ -100,29 +100,33 @@ int main(int argc, char ** argv) {
     
     */
 
-    while(1) {
-        pause();
+    // while(1) {
+    //     pause();
 
-        read_data(fd_read, buffer);
+    //     read_data(fd_read, buffer);
         
-        if (strncmp(buffer, "MARKET SELL", 11) != 0) 
-            continue;
+    //     if (strncmp(buffer, "MARKET SELL", 11) != 0) 
+    //         continue;
 
-        struct market_data storage; 
-        parse_order(&storage, buffer);
+    //     struct market_data storage; 
+    //     parse_order(&storage, buffer);
 
-        if (storage.quantity >= 1000) {
-            break;
-        } else {
-            char reval[256];
-            snprintf(reval, 256, BUY_ORDER, order_id, storage.name, storage.quantity, storage.price);
+    //     if (storage.quantity >= 1000) {
+    //         break;
+    //     } else {
+    //         char reval[256];
+    //         snprintf(reval, 256, BUY_ORDER, order_id, storage.name, storage.quantity, storage.price);
 
-            write_data(fd_write, reval);
-            order_id++;
-        }
+    //         write_data(fd_write, reval);
+    //         order_id++;
+    //     }
 
-        kill(parent_id, SIGUSR1);
-    }
+    //     kill(parent_id, SIGUSR1);
+    // }
+
+    write_data(fd_write, "Hello world;");
+    kill(parent_id, SIGUSR1);
+
 
 
     /* End of program cycle */

@@ -9,8 +9,14 @@
 
 //global
 int time;
+int who;
 
-/** 
+void signal_handler(int s, siginfo_t* sinfo, void * context) {
+    who = sinfo->si_pid;
+}
+
+
+/*
      * 1) retrieve head of product sell LL (cheapest sell price)
      * 2) retrieve tail of product buy orders (highest buy price)
      * 3) if buy_price >= sell_price, match order
@@ -451,7 +457,7 @@ void init_traders(struct trader * traders, int n) {
         /* Connect to pipes */
 
         int outgoing_fd = open(fifo_path_exchange, O_WRONLY);
-        fcntl(outgoing_fd, F_SETFL, O_NONBLOCK | O_WRONLY);
+        // fcntl(outgoing_fd, F_SETFL, O_NONBLOCK | O_WRONLY);
 
         if (outgoing_fd == -1) {
             perror("Open exchange FIFO");
@@ -461,7 +467,7 @@ void init_traders(struct trader * traders, int n) {
         printf("%s Connected to %s\n", LOG_PREFIX, fifo_path_exchange);
 
         int incoming_fd = open(fifo_path_trader, O_RDONLY);
-        fcntl(incoming_fd, F_SETFL, O_NONBLOCK | O_RDONLY);
+        // fcntl(incoming_fd, F_SETFL, O_NONBLOCK | O_RDONLY);
 
         if (incoming_fd == -1) {
             perror("Open trader FIFO");
@@ -541,24 +547,15 @@ int main(int argc, char const *argv[])
 
     /* Signal handling */
 
-    // struct sigaction s = {0};
-    // s.sa_flags |= SA_SIGINFO;
+    struct sigaction s = {0};
+    s.sa_flags |= SA_SIGINFO;
 
-    // s.sa_sigaction = sigusr_handler; // could block other signals at this point
-    // if (sigaction(SIGUSR1, &s, NULL) == -1) {
-    //     perror("Failed to bind signal_handler to sigaction struct");
-    //     exit(2);
-    // }
+    s.sa_sigaction = signal_handler; // could block other signals at this point
+    if (sigaction(SIGUSR1, &s, NULL) == -1) {
+        perror("Failed to bind signal_handler to sigaction struct");
+        exit(2);
+    }
 
-    sigset_t set;
-    siginfo_t info;
-    int sig;
-
-    sigemptyset(&set);
-    sigaddset(&set, SIGUSR1);
-    sigaddset(&set, SIGCHLD);   
-    
-    sigprocmask(SIG_BLOCK, &set, NULL);
 
     SEND_MARKET_OPEN(traders, argc-2);
 
@@ -570,15 +567,19 @@ int main(int argc, char const *argv[])
      * 4) parse command
      * 5) Update and communicate back to traders
      */
-    int pid;
 
     while(1) {
+        pause(); 
+        trader * sender = find_trader(who, traders, argc-2);
+        if (sender == NULL)
+            continue;
 
-        sig = sigwaitinfo(&set, &info);
-    
-        if (sig == -1) {
-            perror("sigwaitinfo");
-        } else {
+        receive_data(sender->incoming_fd, buffer);
+        parse_command(sender, buffer, products_ll, traders, argc-2);
+    }
+
+    /**
+     * } else {
             if (sig == SIGUSR1) {
                 pid = info.si_pid;
 
@@ -594,10 +595,10 @@ int main(int argc, char const *argv[])
                 trader * sender = find_trader(pid, traders, argc-2);
 
                 printf("%s Trader %i disconnected\n", LOG_PREFIX, sender->id);
-                exit(1);
+                // exit(1);
             }
         }
-    }
+     */
 
    /* Endgame
     * - Print [PEX] Trader <Trader ID> disconnected
