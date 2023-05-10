@@ -311,6 +311,7 @@ struct trader* get_traders(int argc, char const *argv[], list_node * product_ll)
             p->quantity = 0;
 
             list_add(&traders[i-2].positions, p, POSITION);
+            product_node = product_node->next;
         }
     }
 
