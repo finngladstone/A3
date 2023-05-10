@@ -590,7 +590,11 @@ int main(int argc, char const *argv[])
                 parse_command(sender, buffer, products_ll, traders, argc-2);
 
             } else if (sig == SIGCHLD) {
+                pid = info.si_pid;
+                trader * sender = find_trader(pid, traders, argc-2);
 
+                printf("%s Trader %i disconnected\n", LOG_PREFIX, sender->id);
+                exit(1);
             }
         }
     }
