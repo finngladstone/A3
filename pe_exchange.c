@@ -248,34 +248,32 @@ void parse_command(trader * t, char * command, list_node * product_head, trader 
 			return;
         }
 
-        order o = {0};
+        order * o = malloc(sizeof(order));
 
-        o.broker = t;
-        o.product = p;
-        o.type = SELL;
+        o->broker = t;
+        o->product = p;
+        o->type = SELL;
 
-        o.quantity = quantity;
-        o.unit_cost = unit_price;
-        o.order_id = order_id;
-        o.time = time;
+        o->quantity = quantity;
+        o->unit_cost = unit_price;
+        o->order_id = order_id;
+        o->time = time;
 
-        list_add(&t->orders, &o, ORDER);
-
-        // p->sell_orders = list_add_sorted_asc(p->buy_orders, &o, ORDER);
-        // list_add_sorted(p, &o, ORDER, SELL);
-
-        p->sell_orders = list_get_head(p->sell_orders);
-
+        // ADD NEW ORDER TO LLs
+        list_add(&t->orders, o, ORDER);
+        p->sell_orders = list_add_sorted_asc(p->sell_orders, o, ORDER);
+    
         t->next_order_id++;
 
         //SEND_ACCEPTED
-        SEND_STATUS(t, o.order_id, ACCEPTED);
+        SEND_STATUS(t, o->order_id, ACCEPTED);
 
         //SEND_MARKET_UPDATE
-        SEND_MARKET_UPDATE(traders, n, o, t);
+        SEND_MARKET_UPDATE(traders, n, *o, t);
         //CHECK_MATCH_AND_FILL
 
         //REPORTING
+        spx_report(product_head, traders, n);
     }
 
     else if (strcmp(word, "AMEND") == 0) {
@@ -315,6 +313,9 @@ void parse_command(trader * t, char * command, list_node * product_head, trader 
         //SEND_MARKET_UPDATE??
         SEND_MARKET_UPDATE(traders, n, *to_amend, t);
         //CHECK_MATCH_AND_FILL
+
+        //REPORTING
+        spx_report(product_head, traders, n);
     } 
 
     else if (strcmp(word, "CANCEL") == 0) {
@@ -333,7 +334,6 @@ void parse_command(trader * t, char * command, list_node * product_head, trader 
 
         //update node to cancelled
         order * o = to_cancel->data.order;
-        o->type = CANCEL;
         o->quantity = 0;
         o->unit_cost = 0;
 
@@ -343,8 +343,16 @@ void parse_command(trader * t, char * command, list_node * product_head, trader 
         //MARKET_UPDATE
         SEND_MARKET_UPDATE(traders, n, *o, t);
 
+        if (o->type == BUY) {
+            list_delete(&o->product->buy_orders, to_cancel);
+        } else {
+            list_delete(&o->product->sell_orders, to_cancel);
+        }
+
         // could remove this
         list_delete(&t->orders, to_cancel);
+    
+        spx_report(product_head, traders, n);
 
     } else {
         printf("%s Invalid command: <%s>\n", LOG_PREFIX, command);
