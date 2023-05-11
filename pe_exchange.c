@@ -12,6 +12,10 @@
 int who;
 int time;
 
+void signal_handler(int s, siginfo_t* sinfo, void * context) {
+    who = sinfo->si_pid;
+}
+
 /** 
  * ORDER MATCHING
  * 1) retrieve head of product sell LL (cheapest sell price)
@@ -20,8 +24,6 @@ int time;
  * 4) update position
  * 5) 
  */
-
-
 
 void check_match(product * p) {
     list_node * sell_cursor = p->sell_orders;
@@ -57,7 +59,7 @@ void check_match(product * p) {
 
             //update cursors 
             sell_cursor = sell_cursor->next;
-            buy_cursor = buy_cursor->next;
+            buy_cursor = buy_cursor->prev;
 
             // delete fulfilled orders
             list_delete(&p->sell_orders, sell_cursor->prev);
@@ -188,7 +190,6 @@ void parse_command(trader * t, char * command, list_node * product_head, trader 
         list_add_sorted(&p->buy_orders, &o, ORDER);
 
         t->next_order_id++;
-        time++;
 
         //SEND_ACCEPTED
         SEND_STATUS(t, order_id, ACCEPTED);
@@ -248,7 +249,6 @@ void parse_command(trader * t, char * command, list_node * product_head, trader 
         list_add_sorted(&p->sell_orders, &o, ORDER);
 
         t->next_order_id++;
-        time++;
 
         //SEND_ACCEPTED
         SEND_STATUS(t, o.order_id, ACCEPTED);
@@ -295,8 +295,6 @@ void parse_command(trader * t, char * command, list_node * product_head, trader 
         //SEND_MARKET_UPDATE??
         SEND_MARKET_UPDATE(traders, n, *to_amend, t);
         //CHECK_MATCH_AND_FILL
-
-        time++;
     } 
 
     else if (strcmp(word, "CANCEL") == 0) {
@@ -333,10 +331,6 @@ void parse_command(trader * t, char * command, list_node * product_head, trader 
         SEND_STATUS(t, -1, INVALID);
         return;
     }
-}
-
-void signal_handler(int s, siginfo_t* sinfo, void * context) {
-    who = sinfo->si_pid;
 }
 
 list_node* init_products(const char * filename) {
@@ -562,8 +556,6 @@ int main(int argc, char const *argv[])
     list_node* products_ll = init_products(argv[1]); // get products
     struct trader * traders = get_traders(argc, argv, products_ll); // get list of traders
 
-    init_traders(traders, argc - 2); // create trader pipes, fork, fifo connects
-
     /* Signal handling */
 
     struct sigaction s = {0};
@@ -571,10 +563,18 @@ int main(int argc, char const *argv[])
 
     s.sa_sigaction = signal_handler; // could block other signals at this point
     if (sigaction(SIGUSR1, &s, NULL) == -1) {
-        perror("Failed to bind signal_handler to sigaction struct");
+        perror("Failed to bind signal_handler for SIGUSR1");
         exit(2);
     }
-    
+
+    // if (sigaction(SIGCHLD, &s, NULL) == -1) {
+    //     perror("Failed to bind signal_handler for SIGCHLD");
+    //     exit(2);
+    // }
+
+    /** init traders */
+    init_traders(traders, argc - 2); // create trader pipes, fork, fifo connects
+   
 
     SEND_MARKET_OPEN(traders, argc-2);
 
@@ -597,6 +597,8 @@ int main(int argc, char const *argv[])
 
         receive_data(sender->incoming_fd, buffer);
         parse_command(sender, buffer, products_ll, traders, argc-2);
+
+        time++;
     }
 
    /* Endgame
@@ -621,9 +623,7 @@ int main(int argc, char const *argv[])
     
     /** Free each trader position + order*/
 
-
     free(traders);
-    // free(events);
 
     return 0;
 }
