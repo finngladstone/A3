@@ -56,45 +56,73 @@ void list_add(list_node** h, void* data, data_type type) {
     cursor->next->prev = cursor; // Add this line
 }
 
-void list_add_sorted(list_node** h, void* data, data_type type) { // for order only
-    if (*h == NULL) {
-        *h = list_init(data, type);
-        return;
+
+list_node* list_add_sorted_asc(list_node * head, void* data, data_type type) {
+    list_node * new = list_init(data, type);
+    int new_c = new->data.order->unit_cost;
+
+    if (head == NULL) {
+        return new;
     }
-    
-    list_node * new_node = list_init(data, type);
-    
-    list_node* cursor = *h;
-    list_node* prev = NULL;
 
-    int new_price = 0;
-    int cursor_price = 0;
-
-    while (cursor != NULL) {
-        new_price = ((order*)data)->unit_cost;
-        cursor_price = cursor->data.order->unit_cost;
-
-        if (new_price < cursor_price) {
-            break;
-        }
-
-        prev = cursor;
-        cursor = cursor->next;
-    }
-    
-    if (prev == NULL) {
-        new_node->next = *h;
-        (*h)->prev = new_node;
-        *h = new_node;
+    else if (head->data.order->unit_cost >= new_c) {
+        new->next = head;
+        new->next->prev = new;
+        return new;
     } else {
-        new_node->next = prev->next;
-        new_node->prev = prev;
-        if (prev->next != NULL) {
-            prev->next->prev = new_node;
+        list_node * cursor = head;
+        while (cursor->next != NULL && 
+            cursor->next->data.order->unit_cost < new_c) 
+        {
+            cursor = cursor->next;
         }
-        prev->next = new_node;
+
+        new->next = cursor->next;
+        if (cursor->next != NULL)
+            new->next->prev = new;
+
+        cursor->next = new;
+        new->prev = cursor;
     }
+
+    return head;
+    
+} // for order only
+
+list_node* list_add_sorted_desc(list_node * head, void* data, data_type type) {
+    list_node * new = list_init(data, type);
+    int new_c = new->data.order->unit_cost;
+
+    if (head == NULL) {
+        return new;
+    }
+
+    else if (head->data.order->unit_cost < new_c) {  // Change the comparison from >= to <
+        new->next = head;
+        new->next->prev = new;
+        return new;
+    } else {
+        list_node * cursor = head;
+        while (cursor->next != NULL && 
+            cursor->next->data.order->unit_cost >= new_c)  // Change the comparison from < to >=
+        {
+            cursor = cursor->next;
+        }
+
+        new->next = cursor->next;
+        if (cursor->next != NULL)
+            new->next->prev = new;
+
+        cursor->next = new;
+        new->prev = cursor;
+    }
+    
+    return head;  // Remember to return the head
 }
+
+
+
+
 
 void list_delete(list_node** h, list_node* n) {
     if (*h == NULL) return;
@@ -133,6 +161,8 @@ void list_free(list_node* head) {
 
         else if (temp->type == POSITION) {
             free(temp->data.position);
+        } else if (temp->type == ORDER) {
+            free(temp->data.order);
         }
 
         // Free the memory allocated for the list_node
@@ -162,6 +192,29 @@ list_node* list_get_tail(list_node* h) {
     list_node* cursor = h;
     while (cursor->next != NULL) {
         cursor = cursor->next;
+    }
+
+    return cursor;
+}
+
+int list_get_len(list_node * h) {
+    int len = 0;
+    
+    list_node * cursor = h;
+    while (cursor != NULL) {
+        len++;
+        cursor = cursor->next;
+    }
+
+    return len;
+}
+
+list_node* list_get_head(list_node* node) {
+    if (node == NULL) return NULL;
+
+    list_node* cursor = node;
+    while (cursor->prev != NULL) {
+        cursor = cursor->prev;
     }
 
     return cursor;

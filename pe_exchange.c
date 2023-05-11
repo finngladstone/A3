@@ -12,8 +12,6 @@
 int trader_ready = -1;
 int trader_disconnect = -1;
 
-int time;
-
 void signal_handler_read(int s, siginfo_t* sinfo, void * context) {
     if (s == SIGUSR1) {
         trader_ready = sinfo->si_pid;
@@ -35,7 +33,7 @@ void signal_handler_disc(int s, siginfo_t* sinfo, void * context) {
  * 5) 
  */
 
-void check_match(product * p) {
+void check_match(product * p, int fees) {
     list_node * sell_cursor = p->sell_orders;
     list_node * buy_cursor = list_get_tail(p->buy_orders);
 
@@ -127,7 +125,7 @@ void check_match(product * p) {
     
 }
 
-void parse_command(trader * t, char * command, list_node * product_head, trader * traders, int n) {
+void parse_command(trader * t, char * command, list_node * product_head, trader * traders, int n, int time, int fees) {
     // verbose
     printf("%s [T%d] Parsing command: <%s>\n", LOG_PREFIX, t->id, command);
 
@@ -185,19 +183,20 @@ void parse_command(trader * t, char * command, list_node * product_head, trader 
          * - send MARKET msg to all other trader
          */
 
-        order o = {0};
+        order * o = malloc(sizeof(order));
 
-        o.broker = t;
-        o.product = p;
-        o.type = BUY;
+        o->broker = t;
+        o->product = p;
+        o->type = BUY;
 
-        o.quantity = quantity;
-        o.unit_cost = unit_price;
-        o.order_id = order_id;
-        o.time = time;
+        o->quantity = quantity;
+        o->unit_cost = unit_price;
+        o->order_id = order_id;
+        o->time = time;
 
-        list_add(&t->orders, &o, ORDER);
-        list_add_sorted(&p->buy_orders, &o, ORDER);
+        // ADD TO LIST
+        list_add(&t->orders, o, ORDER);
+        p->buy_orders = list_add_sorted_desc(p->buy_orders, o, ORDER);
 
         t->next_order_id++;
 
@@ -205,8 +204,13 @@ void parse_command(trader * t, char * command, list_node * product_head, trader 
         SEND_STATUS(t, order_id, ACCEPTED);
 
         //SEND_MARKET_UPDATE
-        SEND_MARKET_UPDATE(traders, n, o, t);
+        SEND_MARKET_UPDATE(traders, n, *o, t);
+        
         //CHECK_MATCH_AND_FILL
+        // check_match(o.product);
+
+        //REPORTING
+        spx_report(product_head, traders, n);
 
     } 
 
@@ -256,7 +260,11 @@ void parse_command(trader * t, char * command, list_node * product_head, trader 
         o.time = time;
 
         list_add(&t->orders, &o, ORDER);
-        list_add_sorted(&p->sell_orders, &o, ORDER);
+
+        // p->sell_orders = list_add_sorted_asc(p->buy_orders, &o, ORDER);
+        // list_add_sorted(p, &o, ORDER, SELL);
+
+        p->sell_orders = list_get_head(p->sell_orders);
 
         t->next_order_id++;
 
@@ -266,6 +274,8 @@ void parse_command(trader * t, char * command, list_node * product_head, trader 
         //SEND_MARKET_UPDATE
         SEND_MARKET_UPDATE(traders, n, o, t);
         //CHECK_MATCH_AND_FILL
+
+        //REPORTING
     }
 
     else if (strcmp(word, "AMEND") == 0) {
@@ -550,7 +560,9 @@ int main(int argc, char const *argv[])
     }
 
     char buffer[BUFFER_LEN];
+    
     int fees = 0;
+    int time = 0;
 
     printf("%s Starting\n", LOG_PREFIX); 
        
@@ -618,7 +630,7 @@ int main(int argc, char const *argv[])
                 continue;
 
             receive_data(sender->incoming_fd, buffer);
-            parse_command(sender, buffer, products_ll, traders, argc-2);
+            parse_command(sender, buffer, products_ll, traders, argc-2, time, fees);
 
             trader_ready = -1;
         }
@@ -650,13 +662,13 @@ int main(int argc, char const *argv[])
     */
 
     printf("%s Trading completed\n", LOG_PREFIX);
-    printf("%s Exchange fees collected: %i\n", LOG_PREFIX, fees);
+    printf("%s Exchange fees collected: $%i\n", LOG_PREFIX, fees);
 
     /* Close fds */
 
     for (int i = 0; i < argc-2; i++) {
         close_fifos(&traders[i]);
-        list_free(traders[i].orders);
+        // list_free(traders[i].orders);
         list_free(traders[i].positions);
     }
 

@@ -165,3 +165,130 @@ int number_of_live_traders(trader * traders, int n) {
 
     return c;
 }
+
+int number_of_equal_orders(list_node * h, int c) {
+    int i = 0;
+
+    list_node * cursor = h;
+    while (cursor != NULL) {
+        if (cursor->data.order->unit_cost == c)
+            i++;
+
+        cursor = cursor->next;
+    }
+
+    return i;
+}
+
+void print_aggregate_orders(product * p) {
+    // SELL ORDERS
+    // list_node * cursor = p->sell_orders;
+    // order * o;
+    // int equal;
+
+    // while (cursor != NULL) {
+    //     o = cursor->data.order;
+    //     equal = number_of_equal_orders(p->sell_orders, o->unit_cost);
+
+    //     if (equal == 1) {
+    //         printf("%s\t\tSELL %i @ $%i (1 order)\n", 
+    //             LOG_PREFIX, o->quantity, o->unit_cost);
+
+    //         cursor = cursor->prev;
+
+    //     } else {
+    //         int quantity = 0;
+    //         list_node * temp = cursor;
+
+    //         for (int i = 0; i < equal; i++) {
+    //             quantity += temp->data.order->quantity;
+    //             temp = temp->prev;
+    //         }
+
+    //         printf("%s\t\tSELL %i @ $%i (%i order(s))\n", 
+    //             LOG_PREFIX, quantity, o->unit_cost, equal);
+
+    //         //skip already visited nodes
+    //         cursor = temp->prev;
+    //     }
+    // }
+
+    // cursor = p->buy_orders;
+    // while (cursor != NULL) {
+    //     o = cursor->data.order;
+    //     equal = number_of_equal_orders(p->sell_orders, o->unit_cost);
+
+    //     if (equal == 1) {
+    //         printf("%s\t\tBUY %i @ $%i (1 order)\n", 
+    //             LOG_PREFIX, o->quantity, o->unit_cost);
+
+    //         cursor = cursor->prev;
+
+    //     } else {
+    //         int quantity = 0;
+    //         list_node * temp = cursor;
+
+    //         for (int i = 0; i < equal; i++) {
+    //             quantity += temp->data.order->quantity;
+    //             temp = temp->prev;
+    //         }
+
+    //         printf("%s\t\tBUY %i @ $%i (%i order(s))\n", 
+    //             LOG_PREFIX, quantity, o->unit_cost, equal);
+
+    //         //skip already visited nodes
+    //         cursor = temp->prev;
+    //     }
+    // }
+
+    list_node * cursor = p->buy_orders;
+    while (cursor != NULL) {
+        printf("PRice = %i\n", cursor->data.order->quantity);
+        cursor = cursor->next;
+    }
+
+}
+
+void print_orderbook(list_node * product_ll) {
+    printf("%s\t--ORDERBOOK--\n", LOG_PREFIX);
+    
+    list_node * cursor = product_ll;
+    while(cursor != NULL) {
+        printf("%s\tProduct: %s; Buy levels: %i; Sell levels: %i\n", 
+            LOG_PREFIX, cursor->data.product->name, list_get_len(cursor->data.product->buy_orders), 
+                list_get_len(cursor->data.product->sell_orders));
+        
+        print_aggregate_orders(cursor->data.product);
+        
+        cursor = cursor->next;
+    }
+}
+
+void print_positions(trader * traders, int n) {
+    printf("%s\t--POSITIONS--\n", LOG_PREFIX);
+
+    for (int i = 0; i < n; i++) { // iterate through traders
+        trader * t = &traders[i];
+
+        printf("%s\tTrader %i: ", LOG_PREFIX, t->id);
+        list_node * cursor = t->positions;
+
+        while (cursor != NULL) {
+            position * p = cursor->data.position;
+
+            printf("%s %i ($%i)", p->item->name, p->quantity, p->value);
+            
+            if (cursor->next != NULL)
+                printf(", ");
+            cursor = cursor->next;
+        }
+
+        printf("\n");
+    }
+}
+
+void spx_report(list_node * product_ll, trader * traders, int n_traders) {
+    print_orderbook(product_ll);
+    print_positions(traders, n_traders);
+}
+ 

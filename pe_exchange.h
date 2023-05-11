@@ -111,9 +111,12 @@ void list_add(list_node** h, void* data, data_type type);
 void list_delete(list_node** h, list_node* n);
 void list_free(list_node* h);
 list_node* list_find(list_node* h, const char* name);
-void list_add_sorted(list_node** h, void* data, data_type type);
 list_node* list_get_tail(list_node* h);
+int list_get_len(list_node * h);
+list_node* list_get_head(list_node* node);
 
+list_node* list_add_sorted_asc(list_node * head, void* data, data_type type);
+list_node* list_add_sorted_desc(list_node * head, void* data, data_type type);
 /** Helper functions */
 
 typedef enum {
@@ -129,6 +132,12 @@ int id_command(char * src, char * dest);
 order * find_trader_order(trader * t, int order_id);
 list_node * find_order_listnode(trader * t, int id);
 position * find_position(trader * t, product * p);
+void spx_report(list_node * product_ll, trader * traders, int n_traders);
+int number_of_live_traders(trader * traders, int n);
+void print_positions(trader * traders, int n);
+void print_orderbook(list_node * product_ll);
+void print_aggregate_orders(product * p);
+
 
 /** Comms */
 
@@ -141,6 +150,6 @@ void SEND_MARKET_UPDATE(trader * traders, int n, order o, trader * except);
 void SEND_FILL(trader * t, order * o, int quantity);
 
 /** Etc */
-int number_of_live_traders(trader * traders, int n);
+
 
 #endif 
