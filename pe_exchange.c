@@ -436,7 +436,6 @@ void launch(struct trader * t) {
         char * child_args[] = {t->path, &id, NULL};
 
 		// dup2(STDOUT_FILENO, STDOUT_FILENO);
-        t->online = 1;
         execv(child_args[0], child_args);
 
         perror("execv");
@@ -551,6 +550,7 @@ int main(int argc, char const *argv[])
     }
 
     char buffer[BUFFER_LEN];
+    int fees = 0;
 
     printf("%s Starting\n", LOG_PREFIX); 
        
@@ -636,6 +636,10 @@ int main(int argc, char const *argv[])
         }
 
         time++;
+
+        if (number_of_live_traders(traders, argc-2) == 0)
+            break;
+
     }
 
    /* Endgame
@@ -645,13 +649,15 @@ int main(int argc, char const *argv[])
     * - [PEX] Exchange fees collected: $<total fees>
     */
 
+    printf("%s Trading completed\n", LOG_PREFIX);
+    printf("%s Exchange fees collected: %i\n", LOG_PREFIX, fees);
+
     /* Close fds */
 
     for (int i = 0; i < argc-2; i++) {
-        struct trader t = traders[i];
-        close_fifos(&t);
-        list_free(t.orders);
-        list_free(t.positions);
+        close_fifos(&traders[i]);
+        list_free(traders[i].orders);
+        list_free(traders[i].positions);
     }
 
     /* Free memory */

@@ -140,4 +140,7 @@ void SEND_MARKET_OPEN(trader * traders, int n);
 void SEND_MARKET_UPDATE(trader * traders, int n, order o, trader * except);
 void SEND_FILL(trader * t, order * o, int quantity);
 
+/** Etc */
+int number_of_live_traders(trader * traders, int n);
+
 #endif 

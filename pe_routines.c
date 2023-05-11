@@ -155,3 +155,13 @@ position * find_position(trader * t, product * p) {
 
     return NULL;
 }
+
+int number_of_live_traders(trader * traders, int n) {
+    int c = 0;
+    
+    for (int i = 0; i < n; i++) {
+        c+= traders[i].online;
+    }
+
+    return c;
+}

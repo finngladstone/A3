@@ -126,7 +126,13 @@ void list_free(list_node* head) {
         
         if (temp->type == PRODUCT) {
             // Free the memory allocated for the product structs
+            list_free(temp->data.product->buy_orders);
+            list_free(temp->data.product->sell_orders);
             free(temp->data.product);
+        } 
+
+        else if (temp->type == POSITION) {
+            free(temp->data.position);
         }
 
         // Free the memory allocated for the list_node
