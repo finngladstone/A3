@@ -35,7 +35,7 @@ void signal_handler_disc(int s, siginfo_t* sinfo, void * context) {
 
 void check_match(product * p, int fees) {
     list_node * sell_cursor = p->sell_orders;
-    list_node * buy_cursor = list_get_tail(p->buy_orders);
+    list_node * buy_cursor = p->buy_orders;
 
     order * sell;
     order * buy;
@@ -448,6 +448,8 @@ void launch(struct trader * t) {
     }
 
     if (pid == 0) { // child
+        //DEBUG
+
         // THIS WILL SHIT ON >9 traders
         char id = t->id + '0'; 
 
@@ -676,7 +678,7 @@ int main(int argc, char const *argv[])
 
     for (int i = 0; i < argc-2; i++) {
         close_fifos(&traders[i]);
-        // list_free(traders[i].orders);
+        list_free(traders[i].orders);
         list_free(traders[i].positions);
     }
 

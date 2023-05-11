@@ -153,7 +153,7 @@ void list_free(list_node* head) {
         current = current->next;
         
         if (temp->type == PRODUCT) {
-            // Free the memory allocated for the product structs
+            
             list_free(temp->data.product->buy_orders);
             list_free(temp->data.product->sell_orders);
             free(temp->data.product);
