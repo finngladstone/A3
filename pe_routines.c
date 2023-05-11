@@ -180,73 +180,8 @@ int number_of_equal_orders(list_node * h, int c) {
     return i;
 }
 
-void print_aggregate_orders(product * p) {
-    // SELL ORDERS
-    // list_node * cursor = p->sell_orders;
-    // order * o;
-    // int equal;
-
-    // while (cursor != NULL) {
-    //     o = cursor->data.order;
-    //     equal = number_of_equal_orders(p->sell_orders, o->unit_cost);
-
-    //     if (equal == 1) {
-    //         printf("%s\t\tSELL %i @ $%i (1 order)\n", 
-    //             LOG_PREFIX, o->quantity, o->unit_cost);
-
-    //         cursor = cursor->prev;
-
-    //     } else {
-    //         int quantity = 0;
-    //         list_node * temp = cursor;
-
-    //         for (int i = 0; i < equal; i++) {
-    //             quantity += temp->data.order->quantity;
-    //             temp = temp->prev;
-    //         }
-
-    //         printf("%s\t\tSELL %i @ $%i (%i order(s))\n", 
-    //             LOG_PREFIX, quantity, o->unit_cost, equal);
-
-    //         //skip already visited nodes
-    //         cursor = temp->prev;
-    //     }
-    // }
-
-    // cursor = p->buy_orders;
-    // while (cursor != NULL) {
-    //     o = cursor->data.order;
-    //     equal = number_of_equal_orders(p->sell_orders, o->unit_cost);
-
-    //     if (equal == 1) {
-    //         printf("%s\t\tBUY %i @ $%i (1 order)\n", 
-    //             LOG_PREFIX, o->quantity, o->unit_cost);
-
-    //         cursor = cursor->prev;
-
-    //     } else {
-    //         int quantity = 0;
-    //         list_node * temp = cursor;
-
-    //         for (int i = 0; i < equal; i++) {
-    //             quantity += temp->data.order->quantity;
-    //             temp = temp->prev;
-    //         }
-
-    //         printf("%s\t\tBUY %i @ $%i (%i order(s))\n", 
-    //             LOG_PREFIX, quantity, o->unit_cost, equal);
-
-    //         //skip already visited nodes
-    //         cursor = temp->prev;
-    //     }
-    // }
-
-    list_node * cursor = p->buy_orders;
-    while (cursor != NULL) {
-        printf("PRice = %i\n", cursor->data.order->quantity);
-        cursor = cursor->next;
-    }
-
+void print_aggregate_orders(product * p) { 
+    
 }
 
 void print_orderbook(list_node * product_ll) {
