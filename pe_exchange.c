@@ -9,11 +9,21 @@
 
 //global
 
-int who;
+int trader_ready = -1;
+int trader_disconnect = -1;
+
 int time;
 
-void signal_handler(int s, siginfo_t* sinfo, void * context) {
-    who = sinfo->si_pid;
+void signal_handler_read(int s, siginfo_t* sinfo, void * context) {
+    if (s == SIGUSR1) {
+        trader_ready = sinfo->si_pid;
+    }
+}
+
+void signal_handler_disc(int s, siginfo_t* sinfo, void * context) {
+    if (s == SIGCHLD) {
+        trader_disconnect = sinfo->si_pid;
+    }
 }
 
 /** 
@@ -558,12 +568,21 @@ int main(int argc, char const *argv[])
 
     /* Signal handling */
 
-    struct sigaction s = {0};
-    s.sa_flags |= SA_SIGINFO;
+    struct sigaction s_sigusr = {0};
+    s_sigusr.sa_flags |= SA_SIGINFO;
 
-    s.sa_sigaction = signal_handler; // could block other signals at this point
-    if (sigaction(SIGUSR1, &s, NULL) == -1) {
+    s_sigusr.sa_sigaction = signal_handler_read; // could block other signals at this point
+    if (sigaction(SIGUSR1, &s_sigusr, NULL) == -1) {
         perror("Failed to bind signal_handler for SIGUSR1");
+        exit(2);
+    }
+
+    struct sigaction s_sigchld = {0};
+    s_sigchld.sa_flags |= SA_SIGINFO;
+
+    s_sigchld.sa_sigaction = signal_handler_disc;
+    if (sigaction(SIGCHLD, &s_sigchld, NULL) == -1) {
+        perror("Failed to bind signal_handler for SIGCHLD");
         exit(2);
     }
 
@@ -590,13 +609,31 @@ int main(int argc, char const *argv[])
 	// sleep(1);
 
     while(1) {
-        pause(); 
-        trader * sender = find_trader(who, traders, argc-2);
-        if (sender == NULL)
-            continue;
+        if (trader_ready && trader_disconnect == -1)
+            pause(); 
 
-        receive_data(sender->incoming_fd, buffer);
-        parse_command(sender, buffer, products_ll, traders, argc-2);
+        if (trader_ready != -1) {
+            trader * sender = find_trader(trader_ready, traders, argc-2);
+            if (sender == NULL)
+                continue;
+
+            receive_data(sender->incoming_fd, buffer);
+            parse_command(sender, buffer, products_ll, traders, argc-2);
+
+            trader_ready = -1;
+        }
+
+        if (trader_disconnect != -1) {
+            trader * sender = find_trader(trader_disconnect, traders, argc-2);
+            if (sender == NULL)
+                continue;
+
+            sender->online = 0;
+
+            printf("%s Trader %i disconnected\n", LOG_PREFIX, sender->id);
+
+            trader_disconnect = -1;
+        }
 
         time++;
     }

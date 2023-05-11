@@ -134,6 +134,8 @@ int main(int argc, char ** argv) {
 	write_data(fd_write, "BUY 0 GPU 30 500;");
 	kill(parent_id, SIGUSR1);
 
+    sleep(1);
+
 
     /* End of program cycle */
 
