@@ -33,7 +33,9 @@ void signal_handler_disc(int s, siginfo_t* sinfo, void * context) {
  * 5) 
  */
 
-void check_match(product * p, int fees) {
+void check_match(product * p, int * fees) {
+    list_node * to_delete = NULL;
+
     list_node * sell_cursor = p->sell_orders;
     list_node * buy_cursor = p->buy_orders;
 
@@ -48,7 +50,7 @@ void check_match(product * p, int fees) {
 
     orders_fulfilled to_delete;
 
-    while (sell_cursor && buy_cursor) {
+    while (sell_cursor != NULL && buy_cursor != NULL) {
 
         sell = sell_cursor->data.order;
         buy = buy_cursor->data.order;
@@ -66,13 +68,8 @@ void check_match(product * p, int fees) {
 
             // update position quantities
             quantity_sold = buy->quantity;
-
             // update position values
             value = buy->quantity * sell->unit_cost;
-
-            //update cursors 
-            sell_cursor = sell_cursor->next;
-            buy_cursor = buy_cursor->prev;
 
             to_delete = BOTH;
             
@@ -94,8 +91,6 @@ void check_match(product * p, int fees) {
             
             //update positions q
             quantity_sold = sell->quantity;
-            
-
             //update pos value
             value = quantity_sold * sell->unit_cost;
             
@@ -124,12 +119,12 @@ void check_match(product * p, int fees) {
                 
                 list_delete_node_only(&buy->broker->orders, buy_trader_node);
 
-                if (buy_cursor->prev == NULL) {
+                if (buy_cursor->next == NULL) {
                     list_delete_recursive(&p->buy_orders, buy_cursor);
                     buy_cursor = NULL;
                 } else {
-                    buy_cursor = buy_cursor->prev;
-                    list_delete_recursive(&p->buy_orders, buy_cursor->next);  // delete fulfilled BUY ORDER
+                    buy_cursor = buy_cursor->next;
+                    list_delete_recursive(&p->buy_orders, buy_cursor->prev);  // delete fulfilled BUY ORDER
                 }
                 break;
 
@@ -162,12 +157,12 @@ void check_match(product * p, int fees) {
                 }
                 
                 //remove BUY
-                if (buy_cursor->prev == NULL) {
+                if (buy_cursor->next == NULL) {
                     list_delete_recursive(&p->buy_orders, buy_cursor);
                     buy_cursor = NULL;
                 } else {
-                    buy_cursor = buy_cursor->prev;
-                    list_delete_recursive(&p->buy_orders, buy_cursor->next);  // delete fulfilled BUY ORDER
+                    buy_cursor = buy_cursor->next;
+                    list_delete_recursive(&p->buy_orders, buy_cursor->prev);  // delete fulfilled BUY ORDER
                 } 
                 break;
         }
@@ -178,7 +173,7 @@ void check_match(product * p, int fees) {
     
 }
 
-void parse_command(trader * t, char * command, list_node * product_head, trader * traders, int n, int time, int fees) {
+void parse_command(trader * t, char * command, list_node * product_head, trader * traders, int n, int time, int * fees) {
     // verbose
     printf("%s [T%d] Parsing command: <%s>\n", LOG_PREFIX, t->id, command);
 
@@ -679,7 +674,7 @@ int main(int argc, char const *argv[])
                 continue;
 
             receive_data(sender->incoming_fd, buffer);
-            parse_command(sender, buffer, products_ll, traders, argc-2, time, fees);
+            parse_command(sender, buffer, products_ll, traders, argc-2, time, &fees);
 
             trader_ready = -1;
         }

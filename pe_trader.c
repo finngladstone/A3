@@ -134,12 +134,17 @@ int main(int argc, char ** argv) {
 	write_data(fd_write, "BUY 0 GPU 30 500;");
 	kill(parent_id, SIGUSR1);
 
-    sleep(1);
+    sleep(2);
 
-    write_data(fd_write, "BUY 1 GPU 10 500;");
+    write_data(fd_write, "BUY 1 GPU 10 504;");
     kill(parent_id, SIGUSR1);
 
-    sleep(1);
+    sleep(2);
+
+    write_data(fd_write, "BUY 2 GPU 10 520;");
+    kill(parent_id, SIGUSR1);
+
+    sleep(2);
 
     // write_data(fd_write, "SELL 2 GPU 20 499;");
     // kill(parent_id, SIGUSR1);
