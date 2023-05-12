@@ -69,27 +69,43 @@ void check_match(product * p, int fees) {
             sell_cursor = sell_cursor->next;
             buy_cursor = buy_cursor->prev;
 
-            // delete fulfilled orders
-            list_delete(&p->sell_orders, sell_cursor->prev);
-            list_delete(&p->buy_orders, buy_cursor->prev);
+            //remove SELL
+            if (sell_cursor->next == NULL) {
+                list_delete(&p->sell_orders, sell_cursor);
+                sell_cursor = NULL;
+            } else {
+                sell_cursor = sell_cursor->next;
+                list_delete(&p->sell_orders, sell_cursor->prev);
+            }
+            
+            //remove BUY
+            if (buy_cursor->prev == NULL) {
+                list_delete(&p->buy_orders, buy_cursor);
+                buy_cursor = NULL;
+            } else {
+                buy_cursor = buy_cursor->prev;
+                list_delete(&p->buy_orders, buy_cursor->next);  // delete fulfilled BUY ORDER
+            } 
             
         } 
 
         else if (buy->quantity < sell->quantity) {
 
             // update positions
-            int quantity_sold = buy->quantity;
+            quantity_sold = buy->quantity;
 
             value = quantity_sold * sell->unit_cost;
             
             sell->quantity -= quantity_sold;
 
-            //update cursors - dont move next sold cursor -- GOING BACKWARDS IN BUY ORDERS
-            buy_cursor = buy_cursor->prev;
-
-            // delete fulfilled BUY ORDER
-            list_delete(&p->buy_orders, buy_cursor->next);
-
+            // move BUY cursor
+            if (buy_cursor->prev == NULL) {
+                list_delete(&p->buy_orders, buy_cursor);
+                buy_cursor = NULL;
+            } else {
+                buy_cursor = buy_cursor->prev;
+                list_delete(&p->buy_orders, buy_cursor->next);  // delete fulfilled BUY ORDER
+            } 
         } 
 
         else if (buy->quantity > sell->quantity) {
@@ -103,11 +119,14 @@ void check_match(product * p, int fees) {
             
             buy->quantity -= quantity_sold;
 
-            //update cursor - dont move buy cursor as unfulfilled
-            sell_cursor = sell_cursor->next;
-
-            // delete fulfilled SELL ORDER
-            list_delete(&p->sell_orders, sell_cursor->prev);
+            // move SELL cursor
+            if (sell_cursor->next == NULL) {
+                list_delete(&p->sell_orders, sell_cursor);
+                sell_cursor = NULL;
+            } else {
+                sell_cursor = sell_cursor->next;
+                list_delete(&p->sell_orders, sell_cursor->prev);
+            }
         }
 
         seller_pos->quantity -= quantity_sold;
@@ -118,6 +137,8 @@ void check_match(product * p, int fees) {
 
         SEND_FILL(sell->broker, sell, quantity_sold);
         SEND_FILL(buy->broker, buy, quantity_sold);
+
+        fees += value * FEE_PERCENTAGE/100;
         
     }
 
@@ -207,7 +228,7 @@ void parse_command(trader * t, char * command, list_node * product_head, trader 
         SEND_MARKET_UPDATE(traders, n, *o, t);
         
         //CHECK_MATCH_AND_FILL
-        // check_match(o.product);
+        check_match(o->product, fees);
 
         //REPORTING
         spx_report(product_head, traders, n);
@@ -271,6 +292,7 @@ void parse_command(trader * t, char * command, list_node * product_head, trader 
         //SEND_MARKET_UPDATE
         SEND_MARKET_UPDATE(traders, n, *o, t);
         //CHECK_MATCH_AND_FILL
+        check_match(o->product, fees);
 
         //REPORTING
         spx_report(product_head, traders, n);
@@ -313,6 +335,7 @@ void parse_command(trader * t, char * command, list_node * product_head, trader 
         //SEND_MARKET_UPDATE??
         SEND_MARKET_UPDATE(traders, n, *to_amend, t);
         //CHECK_MATCH_AND_FILL
+        check_match(to_amend->product, fees);
 
         //REPORTING
         spx_report(product_head, traders, n);
@@ -348,9 +371,6 @@ void parse_command(trader * t, char * command, list_node * product_head, trader 
         } else {
             list_delete(&o->product->sell_orders, to_cancel);
         }
-
-        // could remove this
-        list_delete(&t->orders, to_cancel);
     
         spx_report(product_head, traders, n);
 
@@ -659,6 +679,16 @@ int main(int argc, char const *argv[])
 
     for (int i = 0; i < argc-2; i++) {
         close_fifos(&traders[i]);
+
+        /** unlink fifos */
+
+        char path_temp[PATH_LEN] = {0};
+        snprintf(path_temp, PATH_LEN, FIFO_EXCHANGE, traders[i].id);
+        unlink(path_temp);
+
+        snprintf(path_temp, PATH_LEN, FIFO_TRADER, traders[i].id);
+        unlink(path_temp);
+
         list_free_recursive(traders[i].orders);
         list_free_recursive(traders[i].positions);
     }
