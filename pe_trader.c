@@ -126,20 +126,23 @@ int main(int argc, char ** argv) {
 
 	// printf("[T] parent id = %i\n", parent_id);
 
-	write_data(fd_write, "HELLO WORLD");
-	kill(parent_id, SIGUSR1);
+	// write_data(fd_write, "HELLO WORLD");
+	// kill(parent_id, SIGUSR1);
 
 	sleep(1);
 
 	write_data(fd_write, "BUY 0 GPU 30 500;");
 	kill(parent_id, SIGUSR1);
 
-    sleep(2);
+    sleep(1);
 
     write_data(fd_write, "BUY 1 GPU 10 500;");
     kill(parent_id, SIGUSR1);
 
     sleep(1);
+
+    // write_data(fd_write, "SELL 2 GPU 20 499;");
+    // kill(parent_id, SIGUSR1);
 
 
     /* End of program cycle */

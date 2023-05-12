@@ -181,6 +181,55 @@ int number_of_equal_orders(list_node * h, int c) {
 }
 
 void print_aggregate_orders(product * p) { 
+    list_node * cursor;
+
+    // SELL ORDERS FIRST
+    cursor = list_get_tail(p->sell_orders);
+
+    while (cursor != NULL) {
+        order * o = cursor->data.order;
+        int e = number_of_equal_orders(p->sell_orders, o->unit_cost);
+
+        if (e == 1) {
+            printf("%s\t\tSELL %i @ $%i (1 order)\n", LOG_PREFIX, o->quantity, o->unit_cost);
+            cursor = cursor->prev;
+        } 
+        
+        else {
+            int sum_quantity = 0;
+            for (int i = 0; i < e; i++) {
+                sum_quantity += cursor->data.order->quantity;
+                cursor = cursor->prev;
+            }
+
+            printf("%s\t\tSELL %i @ %i (%i orders)\n", LOG_PREFIX, sum_quantity, o->unit_cost, e);
+        }
+    }
+
+    // NOW BUY ORDERS
+    // THIS TIME TRAVERSE NORMALLY FROM HEAD - TAIL AS STORED IN DESC
+    
+    cursor = p->buy_orders;
+
+    while (cursor != NULL) {
+        order * o = cursor->data.order;
+        int e = number_of_equal_orders(p->buy_orders, o->unit_cost);
+
+        if (e == 1) {
+            printf("%s\t\tBUY %i @ $%i (1 order)\n", LOG_PREFIX, o->quantity, o->unit_cost);
+            cursor = cursor->next;
+        } 
+        
+        else {
+            int sum_quantity = 0;
+            for (int i = 0; i < e; i++) {
+                sum_quantity += cursor->data.order->quantity;
+                cursor = cursor->next;
+            }
+
+            printf("%s\t\tBUY %i @ %i (%i orders)\n", LOG_PREFIX, sum_quantity, o->unit_cost, e);
+        }
+    }
     
 }
 
