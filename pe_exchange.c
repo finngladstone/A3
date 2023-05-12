@@ -35,6 +35,8 @@ void signal_handler_disc(int s, siginfo_t* sinfo, void * context) {
 
 void check_match(product * p, int * fees) {
 
+    list_node * to_delete = NULL;
+
     list_node * sell_cursor = p->sell_orders;
     list_node * buy_cursor = p->buy_orders;
 
@@ -46,8 +48,6 @@ void check_match(product * p, int * fees) {
 
     int quantity_sold;
     int value;
-
-    orders_fulfilled to_delete;
 
     while (sell_cursor != NULL && buy_cursor != NULL) {
 
@@ -70,7 +70,10 @@ void check_match(product * p, int * fees) {
             // update position values
             value = buy->quantity * sell->unit_cost;
 
-            to_delete = BOTH;
+            list_add(&to_delete, sell, ORDER);
+            sell_cursor = sell_cursor->next;
+            list_add(&to_delete, buy, ORDER);
+            buy_cursor = buy_cursor->next;
             
         } 
 
@@ -83,7 +86,8 @@ void check_match(product * p, int * fees) {
             
             sell->quantity -= quantity_sold;
 
-            to_delete = BUY;
+            list_add(&to_delete, buy, ORDER);
+            buy_cursor = buy_cursor->next;
         } 
 
         else if (buy->quantity > sell->quantity) {
@@ -95,7 +99,8 @@ void check_match(product * p, int * fees) {
             
             buy->quantity -= quantity_sold;
 
-            to_delete = SELL;
+            list_add(&to_delete, sell, ORDER);
+            sell_cursor = sell_cursor->next;
         }
 
         seller_pos->quantity -= quantity_sold;
@@ -108,65 +113,27 @@ void check_match(product * p, int * fees) {
         SEND_FILL(buy->broker, buy, quantity_sold);
 
         fees += value * FEE_PERCENTAGE/100;
-
-        list_node * buy_trader_node = find_order_listnode(buy->broker, buy->order_id);
-        list_node * sell_trader_node = find_order_listnode(sell->broker, sell->order_id);
-
-        switch(to_delete) {
-            case BUY_CLEAR:
-                // delete trader node
-                
-                list_delete_node_only(&buy->broker->orders, buy_trader_node);
-
-                if (buy_cursor->next == NULL) {
-                    list_delete_recursive(&p->buy_orders, buy_cursor);
-                    buy_cursor = NULL;
-                } else {
-                    buy_cursor = buy_cursor->next;
-                    list_delete_recursive(&p->buy_orders, buy_cursor->prev);  // delete fulfilled BUY ORDER
-                }
-                break;
-
-            case SELL_CLEAR:
-                // delete trader SELL node
-                list_delete_node_only(&sell->broker->orders, sell_trader_node);
-
-                 // move SELL cursor
-                if (sell_cursor->next == NULL) {
-                    list_delete_recursive(&p->sell_orders, sell_cursor);
-                    sell_cursor = NULL;
-                } else {
-                    sell_cursor = sell_cursor->next;
-                    list_delete_recursive(&p->sell_orders, sell_cursor->prev);
-                }
-                break;
-
-            case BOTH:
-                // delete BOTH trader order nodes
-                list_delete_node_only(&buy->broker->orders, buy_trader_node);
-                list_delete_node_only(&sell->broker->orders, sell_trader_node);
-
-                    //remove SELL
-                if (sell_cursor->next == NULL) {
-                    list_delete_recursive(&p->sell_orders, sell_cursor);
-                    sell_cursor = NULL;
-                } else {
-                    sell_cursor = sell_cursor->next;
-                    list_delete_recursive(&p->sell_orders, sell_cursor->prev);
-                }
-                
-                //remove BUY
-                if (buy_cursor->next == NULL) {
-                    list_delete_recursive(&p->buy_orders, buy_cursor);
-                    buy_cursor = NULL;
-                } else {
-                    buy_cursor = buy_cursor->next;
-                    list_delete_recursive(&p->buy_orders, buy_cursor->prev);  // delete fulfilled BUY ORDER
-                } 
-                break;
-        }
         
     }
+
+    list_node * cursor = to_delete;
+    while (cursor != NULL) {
+        order * o = cursor->data.order;
+        list_node * trader_node = find_order_listnode(o->broker, o->order_id);
+        list_node * product_node = find_product_order_listnode(p, o);
+
+        list_delete_node_only(&o->broker->orders, trader_node);
+        
+        if (o->type == BUY) {
+            list_delete_recursive(&p->buy_orders, product_node);
+        } else {
+            list_delete_recursive(&p->sell_orders, product_node);
+        }
+
+        cursor = cursor->next;
+    }
+
+    list_free_node(to_delete);
 
     return;
     

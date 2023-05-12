@@ -22,6 +22,24 @@ int id_command(char * src, char * dest) {
     return 1;
 }
 
+list_node * find_product_order_listnode(product * p, order * o) {
+    list_node * cursor;
+    if (o->type == BUY)
+        cursor = p->buy_orders;
+    else 
+        cursor = p->sell_orders;
+
+    while (cursor != NULL) {
+        if (cursor->data.order->order_id == o->order_id) {
+            return cursor;
+        }
+
+        cursor = cursor->next;
+    }
+
+    return cursor;
+}
+
 order * find_trader_order(trader * t, int order_id) {
     list_node* cursor = t->orders;
     
@@ -45,6 +63,8 @@ list_node * find_order_listnode(trader * t, int id) {
 
     return NULL;
 }
+
+
 
 /** Comms framework */
 

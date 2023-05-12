@@ -123,6 +123,7 @@ list_node* list_get_head(list_node* node);
 
 list_node* list_add_sorted_asc(list_node * head, void* data, data_type type);
 list_node* list_add_sorted_desc(list_node * head, void* data, data_type type);
+list_node * find_product_order_listnode(product * p, order * o);
 
 void list_free_node(list_node* head);
 void list_delete_node_only(list_node** h, list_node* n);
