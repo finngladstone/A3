@@ -124,11 +124,28 @@ list_node* list_add_sorted_desc(list_node * head, void* data, data_type type) {
 
 
 
-void list_delete(list_node** h, list_node* n) {
+void list_delete_recursive(list_node** h, list_node* n) {
+
     if (*h == NULL) return;
+
     list_node* cursor = *h;
     if (*h == n) {
         *h = (*h)->next;
+        
+        switch(n->type) {
+            case PRODUCT:
+                free(n->data.product);
+                break;
+            case POSITION:
+                free(n->data.position);
+                break;
+            case ORDER:
+                free(n->data.order);
+                break;
+        }
+        free(n);
+        
+        
         if (*h) (*h)->prev = NULL; // Add this line
         return;
     }
@@ -138,10 +155,53 @@ void list_delete(list_node** h, list_node* n) {
     }
     list_node* future = cursor->next->next;
     if (future) future->prev = cursor; // Add this line
+
+    list_node * tmp = cursor->next;
+    switch(tmp->type) {
+        case PRODUCT:
+            free(tmp->data.product);
+            break;
+        
+        case POSITION:
+            free(tmp->data.position);
+            break;
+
+        case ORDER:
+            free(tmp->data.order);
+            break;
+    }
+
     free(cursor->next);
     cursor->next = future;
     return;
 }
+
+void list_delete_node_only(list_node** h, list_node* n) {
+
+    if (*h == NULL) return;
+
+    list_node* cursor = *h;
+    if (*h == n) {
+        *h = (*h)->next;
+        if (*h) (*h)->prev = NULL;
+        free(n);  // Only free the node itself, not the data it contains
+        return;
+    }
+
+    while (cursor->next != n){
+        if (cursor->next == NULL) return;
+        cursor = cursor->next;
+    }
+
+    list_node* future = cursor->next->next;
+    if (future) future->prev = cursor;
+
+    free(cursor->next);  // Only free the node itself, not the data it contains
+    cursor->next = future;
+
+    return;
+}
+
 
 
 void list_free_recursive(list_node* head) {
@@ -183,6 +243,10 @@ void list_free_node(list_node* head) {
             list_free_node(cursor->data.product->buy_orders);
             list_free_node(cursor->data.product->sell_orders);
             free(cursor->data.product);
+        }
+
+        if (cursor->type == ORDER) {
+            // free(cursor->data.order);
         }
 
         free(cursor);

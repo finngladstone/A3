@@ -29,6 +29,12 @@ typedef enum {
     CANCEL
 } order_type;
 
+typedef enum {
+    BUY_CLEAR,
+    SELL_CLEAR,
+    BOTH 
+} orders_fulfilled;
+
 /** 
  * Database-like structs
 */
@@ -108,7 +114,7 @@ typedef struct list_node {
 list_node* list_init(void* data, data_type type);
 list_node * list_next(list_node * n);
 void list_add(list_node** h, void* data, data_type type);
-void list_delete(list_node** h, list_node* n);
+void list_delete_recursive(list_node** h, list_node* n);
 void list_free_recursive(list_node* h);
 list_node* list_find(list_node* h, const char* name);
 list_node* list_get_tail(list_node* h);
@@ -119,6 +125,7 @@ list_node* list_add_sorted_asc(list_node * head, void* data, data_type type);
 list_node* list_add_sorted_desc(list_node * head, void* data, data_type type);
 
 void list_free_node(list_node* head);
+void list_delete_node_only(list_node** h, list_node* n);
 /** Helper functions */
 
 typedef enum {
