@@ -34,7 +34,6 @@ void signal_handler_disc(int s, siginfo_t* sinfo, void * context) {
  */
 
 void check_match(product * p, int * fees) {
-    list_node * to_delete = NULL;
 
     list_node * sell_cursor = p->sell_orders;
     list_node * buy_cursor = p->buy_orders;
