@@ -532,24 +532,6 @@ void init_traders(struct trader * traders, int n) {
     }
 }
 
-// int init_epoll(struct trader * traders, int len) {
-
-//     int epoll_instance = epoll_create(len);
-
-//     for (int i = 0; i < len; i++) {
-//         struct epoll_event e = {0};
-//         e.events = EPOLLIN;
-
-//         e.data.fd = traders[i].incoming_fd;
-
-//         if (epoll_ctl(epoll_instance, EPOLL_CTL_ADD, traders[i].incoming_fd, &e) == -1) {
-//             perror("epoll_ctl fail");
-//             exit(2);
-//         }
-//     }
-
-//     return epoll_instance;
-
 void close_fifos(struct trader * t) {
     close(t->incoming_fd);
     close(t->outgoing_fd);
