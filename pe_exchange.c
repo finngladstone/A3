@@ -678,13 +678,13 @@ int main(int argc, char const *argv[])
 
     for (int i = 0; i < argc-2; i++) {
         close_fifos(&traders[i]);
-        list_free(traders[i].orders);
-        list_free(traders[i].positions);
+        list_free_recursive(traders[i].orders);
+        list_free_recursive(traders[i].positions);
     }
 
     /* Free memory */
 
-    list_free(products_ll); 
+    list_free_node(products_ll); 
     
     /** Free each trader position + order*/
 

@@ -144,7 +144,7 @@ void list_delete(list_node** h, list_node* n) {
 }
 
 
-void list_free(list_node* head) {
+void list_free_recursive(list_node* head) {
     list_node* current = head;
     list_node* temp;
     
@@ -154,20 +154,41 @@ void list_free(list_node* head) {
         
         if (temp->type == PRODUCT) {
             
-            list_free(temp->data.product->buy_orders);
-            list_free(temp->data.product->sell_orders);
+            list_free_recursive(temp->data.product->buy_orders); 
+            list_free_recursive(temp->data.product->sell_orders);
             free(temp->data.product);
+
         } 
 
         else if (temp->type == POSITION) {
             free(temp->data.position);
+
         } else if (temp->type == ORDER) {
+
             free(temp->data.order);
+            // free(temp->data.order);
         }
 
         // Free the memory allocated for the list_node
         free(temp);
     }
+}
+
+void list_free_node(list_node* head) {
+    list_node* cursor = head;
+    while(cursor){
+        list_node* tmp = cursor->next;
+
+        if (cursor->type == PRODUCT) {
+            list_free_node(cursor->data.product->buy_orders);
+            list_free_node(cursor->data.product->sell_orders);
+            free(cursor->data.product);
+        }
+
+        free(cursor);
+        cursor = tmp;
+    }
+
 }
 
 list_node* list_find(list_node* h, const char* name) {

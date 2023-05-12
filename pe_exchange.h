@@ -109,7 +109,7 @@ list_node* list_init(void* data, data_type type);
 list_node * list_next(list_node * n);
 void list_add(list_node** h, void* data, data_type type);
 void list_delete(list_node** h, list_node* n);
-void list_free(list_node* h);
+void list_free_recursive(list_node* h);
 list_node* list_find(list_node* h, const char* name);
 list_node* list_get_tail(list_node* h);
 int list_get_len(list_node * h);
@@ -117,6 +117,8 @@ list_node* list_get_head(list_node* node);
 
 list_node* list_add_sorted_asc(list_node * head, void* data, data_type type);
 list_node* list_add_sorted_desc(list_node * head, void* data, data_type type);
+
+void list_free_node(list_node* head);
 /** Helper functions */
 
 typedef enum {
