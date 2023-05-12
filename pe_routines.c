@@ -222,7 +222,7 @@ void print_aggregate_orders(product * p) {
                 cursor = cursor->prev;
             }
 
-            printf("%s\t\tSELL %i @ %i (%i orders)\n", LOG_PREFIX, sum_quantity, o->unit_cost, e);
+            printf("%s\t\tSELL %i @ $%i (%i orders)\n", LOG_PREFIX, sum_quantity, o->unit_cost, e);
         }
     }
 
@@ -247,7 +247,7 @@ void print_aggregate_orders(product * p) {
                 cursor = cursor->next;
             }
 
-            printf("%s\t\tBUY %i @ %i (%i orders)\n", LOG_PREFIX, sum_quantity, o->unit_cost, e);
+            printf("%s\t\tBUY %i @ $%i (%i orders)\n", LOG_PREFIX, sum_quantity, o->unit_cost, e);
         }
     }
     

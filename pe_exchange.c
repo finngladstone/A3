@@ -9,18 +9,31 @@
 
 //global
 
-int trader_ready = -1;
-int trader_disconnect = -1;
+typedef struct {
+    int signum;
+    siginfo_t *sinfo;
+    void *context;
+} queued_signal;
+
+volatile queued_signal signal_queue[MAX_SIGNALS];
+volatile sig_atomic_t queue_size = 0;
 
 void signal_handler_read(int s, siginfo_t* sinfo, void * context) {
-    if (s == SIGUSR1) {
-        trader_ready = sinfo->si_pid;
+    if (queue_size < MAX_SIGNALS) {
+        signal_queue[queue_size].signum = s;
+        signal_queue[queue_size].sinfo = sinfo;
+        signal_queue[queue_size].context = context;
+        
+        queue_size++;
     }
 }
 
 void signal_handler_disc(int s, siginfo_t* sinfo, void * context) {
-    if (s == SIGCHLD) {
-        trader_disconnect = sinfo->si_pid;
+    if (queue_size < MAX_SIGNALS) {
+        signal_queue[queue_size].signum = s;
+        signal_queue[queue_size].sinfo = sinfo;
+        signal_queue[queue_size].context = context;
+        queue_size++;
     }
 }
 
@@ -592,6 +605,7 @@ int main(int argc, char const *argv[])
 
     struct sigaction s_sigusr = {0};
     s_sigusr.sa_flags |= SA_SIGINFO;
+    s_sigusr.sa_flags |= SA_RESTART;
 
     s_sigusr.sa_sigaction = signal_handler_read; // could block other signals at this point
     if (sigaction(SIGUSR1, &s_sigusr, NULL) == -1) {
@@ -601,6 +615,7 @@ int main(int argc, char const *argv[])
 
     struct sigaction s_sigchld = {0};
     s_sigchld.sa_flags |= SA_SIGINFO;
+    s_sigchld.sa_flags |= SA_RESTART;
 
     s_sigchld.sa_sigaction = signal_handler_disc;
     if (sigaction(SIGCHLD, &s_sigchld, NULL) == -1) {
@@ -630,31 +645,59 @@ int main(int argc, char const *argv[])
 
 	// sleep(1);
 
-    while(1) {
-        if (trader_ready && trader_disconnect == -1)
-            pause(); 
+    sigset_t allset, oldset;
+    sigfillset(&allset);
+    sigprocmask(SIG_BLOCK, &allset, &oldset);
 
-        if (trader_ready != -1) {
-            trader * sender = find_trader(trader_ready, traders, argc-2);
-            if (sender == NULL)
-                continue;
+    while(1) 
+    {
 
-            receive_data(sender->incoming_fd, buffer);
-            parse_command(sender, buffer, products_ll, traders, argc-2, time, &fees);
-
-            trader_ready = -1;
+        if (queue_size == 0) {
+            sigprocmask(SIG_SETMASK, &oldset, NULL);
+            pause();
+            sigprocmask(SIG_BLOCK, &allset, NULL);  // Block all signals again
         }
 
-        if (trader_disconnect != -1) {
-            trader * sender = find_trader(trader_disconnect, traders, argc-2);
-            if (sender == NULL)
-                continue;
+        while (queue_size > 0) {
+            queued_signal s = signal_queue[0];
 
-            sender->online = 0;
+            switch(s.signum) {
+                case SIGUSR1:
+                {
+                    trader * sender = find_trader(s.sinfo->si_pid, traders, argc-2);
+                    if (sender == NULL)
+                        continue;
+                    
+                    receive_data(sender->incoming_fd, buffer);
+                    parse_command(sender, buffer, products_ll, traders, argc-2, time, &fees);
+                    
+                    break;
+                }
+                
 
-            printf("%s Trader %i disconnected\n", LOG_PREFIX, sender->id);
+                case SIGCHLD:
+                {
+                    trader * sender = find_trader(s.sinfo->si_pid, traders, argc-2);
+                    if (sender == NULL)
+                        continue;
 
-            trader_disconnect = -1;
+                    sender->online = 0;
+                    printf("%s Trader %i disconnected\n", LOG_PREFIX, sender->id);
+
+                    break;
+                }
+                
+                default:
+                    continue;
+            }
+
+             // Shift the rest of the queue down
+            for (int i = 0; i < queue_size - 1; i++) {
+                signal_queue[i] = signal_queue[i + 1];
+            }
+
+            // Decrease the size of the queue
+            queue_size--;
         }
 
         time++;
