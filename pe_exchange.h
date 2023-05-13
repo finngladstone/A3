@@ -4,6 +4,7 @@
 #include "pe_common.h"
 
 #include <sys/epoll.h>
+#include <math.h>
 
 /** Constants */
 

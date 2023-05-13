@@ -84,7 +84,6 @@ void check_match(product * p, int * fees) {
             // update position quantities
             quantity_sold = buy->quantity;
             // update position values
-            value = buy->quantity * sell->unit_cost;
 
             to_delete[c] = sell_cursor;
             c++;
@@ -101,8 +100,6 @@ void check_match(product * p, int * fees) {
             // update positions
             quantity_sold = buy->quantity;
 
-            value = quantity_sold * sell->unit_cost;
-            
             sell->quantity -= quantity_sold;
 
             to_delete[c] = buy_cursor;
@@ -115,13 +112,33 @@ void check_match(product * p, int * fees) {
             //update positions q
             quantity_sold = sell->quantity;
             //update pos value
-            value = quantity_sold * sell->unit_cost;
             
             buy->quantity -= quantity_sold;
 
             to_delete[c] = sell_cursor;
             c++;
             sell_cursor = sell_cursor->next;
+        }
+
+        double fees_paid;
+
+        if (sell->time < buy->time) {
+
+            value = quantity_sold * sell->unit_cost;
+            fees_paid = ceil(value * (FEE_PERCENTAGE/100));
+
+            buyer_pos->value -= fees_paid;
+
+            printf("%s Match: Order %i [T%i], New Order %i [T%i], value: $%i, fee: $%i.\n",
+                LOG_PREFIX, sell->order_id, sell->broker->id, buy->order_id, buy->broker->id, value, (int)fees_paid);
+        } else {
+            value = quantity_sold * buy->unit_cost;
+            fees_paid = ceil(value * (FEE_PERCENTAGE/100));
+
+            seller_pos->value -= fees_paid;
+
+            printf("%s Match: Order %i [T%i], New Order %i [T%i], value: $%i, fee: $%i.\n",
+                LOG_PREFIX, buy->order_id, buy->broker->id, sell->order_id, sell->broker->id, value, (int)fees_paid);
         }
 
         seller_pos->quantity -= quantity_sold;
@@ -133,7 +150,7 @@ void check_match(product * p, int * fees) {
         SEND_FILL(sell->broker, sell, quantity_sold);
         SEND_FILL(buy->broker, buy, quantity_sold);
 
-        fees += value * FEE_PERCENTAGE/100;
+        *fees += (int) fees_paid;
 
     }
 
@@ -173,20 +190,20 @@ void parse_command(trader * t, char * command, list_node * product_head, trader 
 
     if (strcmp(word, "BUY") == 0) {
         if (sscanf(command, "BUY %i %s %i %i", &order_id, product_name, &quantity, &unit_price) != 4) {
-			printf("%s Invalid command format: <%s>\n", LOG_PREFIX , command); 
+			// printf("%s Invalid command format: <%s>\n", LOG_PREFIX , command); 
             SEND_STATUS(t, -1, INVALID);
 			return;
         }
 
         if (order_id != t->next_order_id) {
-			printf("%s Order ID %i invalid\n", LOG_PREFIX, order_id);
+			// printf("%s Order ID %i invalid\n", LOG_PREFIX, order_id);
             SEND_STATUS(t, -1, INVALID);
 			return;
         }
 
         list_node * l = list_find(product_head, product_name);
         if (l == NULL) {
-			printf("%s Invalid product name: <%s>\n", LOG_PREFIX ,product_name);
+			// printf("%s Invalid product name: <%s>\n", LOG_PREFIX ,product_name);
             SEND_STATUS(t, -1, INVALID);
 			return;
         }
@@ -194,13 +211,13 @@ void parse_command(trader * t, char * command, list_node * product_head, trader 
         product * p = l->data.product;
 
         if (quantity < 1 || quantity > 999999) {
-			printf("%s Invalid quantity: <%i>\n", LOG_PREFIX, quantity);
+			// printf("%s Invalid quantity: <%i>\n", LOG_PREFIX, quantity);
             SEND_STATUS(t, -1, INVALID);
 			return;
         }
 
         if (unit_price < 1 || unit_price > 999999) {
-			printf("%s Invalid price <$%i>\n", LOG_PREFIX, unit_price);
+			// printf("%s Invalid price <$%i>\n", LOG_PREFIX, unit_price);
             SEND_STATUS(t, -1, INVALID);
 			return;
         }
@@ -246,20 +263,20 @@ void parse_command(trader * t, char * command, list_node * product_head, trader 
 
     else if (strcmp(word, "SELL") == 0) {
         if (sscanf(command, "SELL %i %s %i %i", &order_id, product_name, &quantity, &unit_price) != 4) {
-			printf("%s Invalid command format: <%s>\n", LOG_PREFIX , command); 
+			// printf("%s Invalid command format: <%s>\n", LOG_PREFIX , command); 
             SEND_STATUS(t, -1, INVALID);
 			return;
         }
 
         if (order_id != t->next_order_id) {
-			printf("%s Order ID %i invalid\n", LOG_PREFIX, order_id);
+			// printf("%s Order ID %i invalid\n", LOG_PREFIX, order_id);
             SEND_STATUS(t, -1, INVALID);
 			return;
         }
 
         list_node * l = list_find(product_head, product_name);
         if (l == NULL) {
-            printf("%s Invalid product name: <%s>\n", LOG_PREFIX ,product_name);
+            // printf("%s Invalid product name: <%s>\n", LOG_PREFIX ,product_name);
 			SEND_STATUS(t, -1, INVALID);
 			return;
 
@@ -267,13 +284,13 @@ void parse_command(trader * t, char * command, list_node * product_head, trader 
         product * p = (product *)l->data.product;
 
         if (quantity < 1 || quantity > 999999) {
-			printf("%s Invalid quantity: <%i>\n", LOG_PREFIX, quantity);
+			// printf("%s Invalid quantity: <%i>\n", LOG_PREFIX, quantity);
             SEND_STATUS(t, -1, INVALID);
 			return;
         }
 
         if (unit_price < 1 || unit_price > 999999) {
-			printf("%s Invalid price <$%i>\n", LOG_PREFIX, unit_price);
+			// printf("%s Invalid price <$%i>\n", LOG_PREFIX, unit_price);
             SEND_STATUS(t, -1, INVALID);
 			return;
         }
