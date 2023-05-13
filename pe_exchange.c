@@ -662,6 +662,9 @@ int main(int argc, char const *argv[])
     sigfillset(&allset);
     sigprocmask(SIG_BLOCK, &allset, &oldset);
 
+    // ignore sigpipe incase trader disc early
+    signal(SIGPIPE, SIG_IGN);
+
     while(1) 
     {
 

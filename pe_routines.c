@@ -72,7 +72,8 @@ list_node * find_order_listnode(trader * t, int id) {
 
 void send_data(int fd, char * message) {
     if (write(fd, message, strlen(message)) == -1) {
-        perror("send_data shit the bed");
+        // perror("send_data shit the bed");
+        return;
     }
 }
 
