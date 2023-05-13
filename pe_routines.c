@@ -203,6 +203,27 @@ int number_of_equal_orders(list_node * h, int c) {
     return i;
 }
 
+
+int get_levels(list_node * order_head) {
+    int count = 0;
+
+    list_node * cursor = order_head;
+    while (cursor != NULL) {
+
+        if (cursor->prev == NULL)
+            count++;
+        else if (cursor->prev->data.order->unit_cost == cursor->data.order->unit_cost) {
+            ; // do nothing
+        } else {
+            count++;
+        }
+
+        cursor = cursor->next;
+    }
+
+    return count;
+}
+
 void print_aggregate_orders(product * p) { 
     list_node * cursor;
 
@@ -261,9 +282,12 @@ void print_orderbook(list_node * product_ll) {
     
     list_node * cursor = product_ll;
     while(cursor != NULL) {
+        int buy_levels = get_levels(cursor->data.product->buy_orders);
+        int sell_levels = get_levels(cursor->data.product->sell_orders);
+
         printf("%s\tProduct: %s; Buy levels: %i; Sell levels: %i\n", 
-            LOG_PREFIX, cursor->data.product->name, list_get_len(cursor->data.product->buy_orders), 
-                list_get_len(cursor->data.product->sell_orders));
+            LOG_PREFIX, cursor->data.product->name, buy_levels, 
+                sell_levels);
         
         print_aggregate_orders(cursor->data.product);
         
@@ -298,4 +322,5 @@ void spx_report(list_node * product_ll, trader * traders, int n_traders) {
     print_orderbook(product_ll);
     print_positions(traders, n_traders);
 }
+
  
