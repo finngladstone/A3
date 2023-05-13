@@ -561,7 +561,7 @@ void init_traders(struct trader * traders, int n) {
         /* Connect to pipes */
 
         int outgoing_fd = open(fifo_path_exchange, O_WRONLY);
-        // fcntl(outgoing_fd, F_SETFL, O_NONBLOCK);
+        fcntl(outgoing_fd, F_SETFL, O_NONBLOCK);
 
         if (outgoing_fd == -1) {
             perror("Open exchange FIFO");
@@ -571,7 +571,7 @@ void init_traders(struct trader * traders, int n) {
         printf("%s Connected to %s\n", LOG_PREFIX, fifo_path_exchange);
 
         int incoming_fd = open(fifo_path_trader, O_RDONLY);
-        // fcntl(incoming_fd, F_SETFL, O_NONBLOCK);
+        fcntl(incoming_fd, F_SETFL, O_NONBLOCK);
 
         if (incoming_fd == -1) {
             perror("Open trader FIFO");
@@ -756,4 +756,5 @@ int main(int argc, char const *argv[])
     free(traders);
 
     exit(0);
+    //
 }
