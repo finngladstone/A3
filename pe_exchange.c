@@ -761,5 +761,4 @@ int main(int argc, char const *argv[])
     free(traders);
 
     exit(0);
-    //
 }
