@@ -327,19 +327,19 @@ void parse_command(trader * t, char * command, list_node * product_head, trader 
 
     else if (strcmp(word, "AMEND") == 0) {
         if (sscanf(command, "AMEND %i %i %i", &order_id, &quantity, &unit_price) != 3) {
-            printf("%s Invalid command format: <%s>\n", LOG_PREFIX , command); 
+            // printf("%s Invalid command format: <%s>\n", LOG_PREFIX , command); 
 			SEND_STATUS(t, -1, INVALID);
 			return;
         }   
 
         if (quantity < 1 || quantity > 999999) {
-			printf("%s Invalid quantity: <%i>\n", LOG_PREFIX, quantity);
+			// printf("%s Invalid quantity: <%i>\n", LOG_PREFIX, quantity);
             SEND_STATUS(t, -1, INVALID);
 			return;
         }
 
         if (unit_price < 1 || unit_price > 999999) {
-			printf("%s Invalid price <$%i>\n", LOG_PREFIX, unit_price);
+			// printf("%s Invalid price <$%i>\n", LOG_PREFIX, unit_price);
             SEND_STATUS(t, -1, INVALID);
 			return;
         }
@@ -352,8 +352,9 @@ void parse_command(trader * t, char * command, list_node * product_head, trader 
 
         order * to_amend = find_trader_order(t, order_id);
         if (to_amend == NULL) {
-            printf("Failed to find order ID %i\n", order_id);
-            exit(2);
+            // printf("Failed to find order ID %i\n", order_id);
+            SEND_STATUS(t, -1, INVALID);
+            return;
         }
 
         /** Amend order */
@@ -376,14 +377,14 @@ void parse_command(trader * t, char * command, list_node * product_head, trader 
 
     else if (strcmp(word, "CANCEL") == 0) {
         if (sscanf(command, "CANCEL %i", &order_id) != 1) {
-            printf("%s Invalid command format: <%s>\n", LOG_PREFIX , command); 
+            // printf("%s Invalid command format: <%s>\n", LOG_PREFIX , command); 
 			SEND_STATUS(t, -1, INVALID);
 			return;
         }
 
         list_node * to_cancel = find_order_listnode(t, order_id);
         if (to_cancel == NULL) {
-			printf("%s Order ID %i invalid\n", LOG_PREFIX, order_id);
+			// printf("%s Order ID %i invalid\n", LOG_PREFIX, order_id);
             SEND_STATUS(t, -1, INVALID);
 			return;
         }
