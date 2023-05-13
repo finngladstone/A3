@@ -394,16 +394,21 @@ void parse_command(trader * t, char * command, list_node * product_head, trader 
         o->quantity = 0;
         o->unit_cost = 0;
 
+        list_node * p_node_cancel = find_product_order_listnode(o->product, o);
 
         //SEND_CONFIRM
         SEND_STATUS(t, order_id, CANCELLED);
         //MARKET_UPDATE
         SEND_MARKET_UPDATE(traders, n, *o, t);
 
+        // delete node only from trader
+        list_delete_node_only(&o->broker->orders, to_cancel);
+
+        // delete node and data from relevant product
         if (o->type == BUY) {
-            list_delete_recursive(&o->product->buy_orders, to_cancel);
+            list_delete_recursive(&o->product->buy_orders, p_node_cancel);
         } else {
-            list_delete_recursive(&o->product->sell_orders, to_cancel);
+            list_delete_recursive(&o->product->sell_orders, p_node_cancel);
         }
     
         spx_report(product_head, traders, n);
