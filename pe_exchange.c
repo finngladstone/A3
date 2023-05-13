@@ -48,7 +48,8 @@ void signal_handler_disc(int s, siginfo_t* sinfo, void * context) {
 
 void check_match(product * p, int * fees) {
 
-    list_node * to_delete = NULL;
+    list_node* to_delete[MAX_DELETE] = {0}; // product list nodes
+    int c = 0;
 
     list_node * sell_cursor = p->sell_orders;
     list_node * buy_cursor = p->buy_orders;
@@ -67,8 +68,10 @@ void check_match(product * p, int * fees) {
         sell = sell_cursor->data.order;
         buy = buy_cursor->data.order;
 
-        if (buy->unit_cost < sell->unit_cost) 
+        if (buy->unit_cost < sell->unit_cost) {
             break;
+        }
+            
 
         seller_pos = find_position(sell->broker, p);
         buyer_pos = find_position(buy->broker, p);
@@ -83,9 +86,12 @@ void check_match(product * p, int * fees) {
             // update position values
             value = buy->quantity * sell->unit_cost;
 
-            list_add(&to_delete, sell, ORDER);
+            to_delete[c] = sell_cursor;
+            c++;
             sell_cursor = sell_cursor->next;
-            list_add(&to_delete, buy, ORDER);
+
+            to_delete[c] = buy_cursor;
+            c++;
             buy_cursor = buy_cursor->next;
             
         } 
@@ -99,7 +105,8 @@ void check_match(product * p, int * fees) {
             
             sell->quantity -= quantity_sold;
 
-            list_add(&to_delete, buy, ORDER);
+            to_delete[c] = buy_cursor;
+            c++;
             buy_cursor = buy_cursor->next;
         } 
 
@@ -112,7 +119,8 @@ void check_match(product * p, int * fees) {
             
             buy->quantity -= quantity_sold;
 
-            list_add(&to_delete, sell, ORDER);
+            to_delete[c] = sell_cursor;
+            c++;
             sell_cursor = sell_cursor->next;
         }
 
@@ -126,27 +134,22 @@ void check_match(product * p, int * fees) {
         SEND_FILL(buy->broker, buy, quantity_sold);
 
         fees += value * FEE_PERCENTAGE/100;
-        
+
     }
 
-    list_node * cursor = to_delete;
-    while (cursor != NULL) {
-        order * o = cursor->data.order;
+    for (int i = 0; i < c; i++) {
+        order * o = to_delete[i]->data.order;
         list_node * trader_node = find_order_listnode(o->broker, o->order_id);
-        list_node * product_node = find_product_order_listnode(p, o);
 
         list_delete_node_only(&o->broker->orders, trader_node);
-        
+
         if (o->type == BUY) {
-            list_delete_recursive(&p->buy_orders, product_node);
+            list_delete_recursive(&p->buy_orders, to_delete[i]);
         } else {
-            list_delete_recursive(&p->sell_orders, product_node);
+            list_delete_recursive(&p->sell_orders, to_delete[i]);
         }
 
-        cursor = cursor->next;
     }
-
-    list_free_node(to_delete);
 
     return;
     
@@ -623,11 +626,6 @@ int main(int argc, char const *argv[])
         exit(2);
     }
 
-    // if (sigaction(SIGCHLD, &s, NULL) == -1) {
-    //     perror("Failed to bind signal_handler for SIGCHLD");
-    //     exit(2);
-    // }
-
     /** init traders */
     init_traders(traders, argc - 2); // create trader pipes, fork, fifo connects
    
@@ -643,8 +641,6 @@ int main(int argc, char const *argv[])
      * 5) Update and communicate back to traders
      */
 
-	// sleep(1);
-
     sigset_t allset, oldset;
     sigfillset(&allset);
     sigprocmask(SIG_BLOCK, &allset, &oldset);
@@ -652,7 +648,7 @@ int main(int argc, char const *argv[])
     while(1) 
     {
 
-        if (queue_size == 0) {
+        if (queue_size == 0 && number_of_live_traders(traders, argc-2) != 0) {
             sigprocmask(SIG_SETMASK, &oldset, NULL);
             pause();
             sigprocmask(SIG_BLOCK, &allset, NULL);  // Block all signals again
@@ -674,7 +670,6 @@ int main(int argc, char const *argv[])
                     break;
                 }
                 
-
                 case SIGCHLD:
                 {
                     trader * sender = find_trader(s.sinfo->si_pid, traders, argc-2);
@@ -691,12 +686,11 @@ int main(int argc, char const *argv[])
                     continue;
             }
 
-             // Shift the rest of the queue down
+             // bump queue
             for (int i = 0; i < queue_size - 1; i++) {
                 signal_queue[i] = signal_queue[i + 1];
             }
 
-            // Decrease the size of the queue
             queue_size--;
         }
 
@@ -744,5 +738,5 @@ int main(int argc, char const *argv[])
 
     free(traders);
 
-    return 0;
+    exit(0);
 }

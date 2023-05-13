@@ -12,6 +12,7 @@
 #define CMD_LEN 7
 #define PRODUCT_LEN 17
 #define MAX_SIGNALS 10
+#define MAX_DELETE 20
 
 #define LOG_PREFIX "[PEX]"
 
