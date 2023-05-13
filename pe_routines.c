@@ -37,7 +37,7 @@ list_node * find_product_order_listnode(product * p, order * o) {
         cursor = cursor->next;
     }
 
-    return cursor;
+    return NULL;
 }
 
 order * find_trader_order(trader * t, int order_id) {
@@ -55,10 +55,12 @@ order * find_trader_order(trader * t, int order_id) {
 list_node * find_order_listnode(trader * t, int id) {
     list_node* cursor = t->orders;
 
-    while(cursor) {
+    while(cursor != NULL) {
         if (cursor->data.order->order_id == id) {
             return cursor;
         }
+
+        cursor = cursor->next;
     }
 
     return NULL;
