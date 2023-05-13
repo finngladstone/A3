@@ -121,11 +121,12 @@ void check_match(product * p, int * fees) {
         }
 
         double fees_paid;
+        double multiplier = FEE_PERCENTAGE * 0.01;
 
         if (sell->time < buy->time) {
 
             value = quantity_sold * sell->unit_cost;
-            fees_paid = ceil(value * FEE_PERCENTAGE/100);
+            fees_paid = round(value * multiplier);
 
             buyer_pos->value -= fees_paid;
 
@@ -133,7 +134,7 @@ void check_match(product * p, int * fees) {
                 LOG_PREFIX, sell->order_id, sell->broker->id, buy->order_id, buy->broker->id, value, (int)fees_paid);
         } else {
             value = quantity_sold * buy->unit_cost;
-            fees_paid = ceil(value * FEE_PERCENTAGE/100);
+            fees_paid = round(value * multiplier);
 
             seller_pos->value -= fees_paid;
 
