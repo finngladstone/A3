@@ -108,7 +108,7 @@ void SEND_STATUS(trader * t, int id, statuses s) {
             status = "AMENDED";
             break;
         case CANCELLED:
-            status = "BREAK";
+            status = "CANCELLED";
             break;
         case INVALID:
             send_data(t->outgoing_fd, "INVALID;");
