@@ -124,7 +124,8 @@ void check_match(product * p, long long int * fees) {
             buyer_pos->value -= fees_paid;
 
             printf("%s Match: Order %i [T%i], New Order %i [T%i], value: $%lli, fee: $%lli.\n",
-                LOG_PREFIX, sell->order_id, sell->broker->id, buy->order_id, buy->broker->id, value, (long long int)fees_paid);
+                LOG_PREFIX, sell->order_id, sell->broker->id, 
+                    buy->order_id, buy->broker->id, value, (long long int)fees_paid);
         } else {
             value = quantity_sold * buy->unit_cost;
             fees_paid = round(value * multiplier);
@@ -132,7 +133,8 @@ void check_match(product * p, long long int * fees) {
             seller_pos->value -= fees_paid;
 
             printf("%s Match: Order %i [T%i], New Order %i [T%i], value: $%lli, fee: $%lli.\n",
-                LOG_PREFIX, buy->order_id, buy->broker->id, sell->order_id, sell->broker->id, value, (long long int)fees_paid);
+                LOG_PREFIX, buy->order_id, buy->broker->id, 
+                    sell->order_id, sell->broker->id, value, (long long int)fees_paid);
         }
 
         seller_pos->quantity -= quantity_sold;
@@ -178,7 +180,14 @@ void parse_command(trader * t, char * command, list_node * product_head, trader 
     }
 
     if (strcmp(word, "BUY") == 0) {
-        if (sscanf(command, "BUY %i %s %i %i", &order_id, product_name, &quantity, &unit_price) != 4) {
+        int invalid_data = 0;
+
+        if (sscanf(command, "BUY %i %s %i %i%n", &order_id, product_name, &quantity, &unit_price, &invalid_data) != 4) {
+            SEND_STATUS(t, -1, INVALID);
+			return;
+        }
+
+        if (command[invalid_data] != '\0') {
             SEND_STATUS(t, -1, INVALID);
 			return;
         }
@@ -246,7 +255,14 @@ void parse_command(trader * t, char * command, list_node * product_head, trader 
     } 
 
     else if (strcmp(word, "SELL") == 0) {
-        if (sscanf(command, "SELL %i %s %i %i", &order_id, product_name, &quantity, &unit_price) != 4) {
+        int invalid_data = 0;
+
+        if (sscanf(command, "SELL %i %s %i %i%n", &order_id, product_name, &quantity, &unit_price, &invalid_data) != 4) {
+            SEND_STATUS(t, -1, INVALID);
+			return;
+        }
+
+        if (command[invalid_data] != '\0') {
             SEND_STATUS(t, -1, INVALID);
 			return;
         }
@@ -304,11 +320,17 @@ void parse_command(trader * t, char * command, list_node * product_head, trader 
     }
 
     else if (strcmp(word, "AMEND") == 0) {
+        int invalid_data = 0;
 
-        if (sscanf(command, "AMEND %i %i %i", &order_id, &quantity, &unit_price) != 3) {
+        if (sscanf(command, "AMEND %i %i %i%n", &order_id, &quantity, &unit_price, &invalid_data) != 3) {
 			SEND_STATUS(t, -1, INVALID);
 			return;
         }   
+
+        if (command[invalid_data] != '\0') {
+            SEND_STATUS(t, -1, INVALID);
+			return;
+        }
 
         if (quantity < 1 || quantity > 999999) {
             SEND_STATUS(t, -1, INVALID);
@@ -344,7 +366,7 @@ void parse_command(trader * t, char * command, list_node * product_head, trader 
             to_amend->product->sell_orders = list_add_sorted_asc(to_amend->product->sell_orders, to_amend, ORDER);
         }
 
-        //SEND_ACCEPTED
+        //SEND_ACCEPTED //
         SEND_STATUS(t, order_id, AMENDED);
 
         //SEND_MARKET_UPDATE??
@@ -357,8 +379,15 @@ void parse_command(trader * t, char * command, list_node * product_head, trader 
     } 
 
     else if (strcmp(word, "CANCEL") == 0) {
-        if (sscanf(command, "CANCEL %i", &order_id) != 1) {
+        int invalid_data = 0;
+
+        if (sscanf(command, "CANCEL %i%n", &order_id, &invalid_data) != 1) {
 			SEND_STATUS(t, -1, INVALID);
+			return;
+        }
+
+        if (command[invalid_data] != '\0') {
+            SEND_STATUS(t, -1, INVALID);
 			return;
         }
 

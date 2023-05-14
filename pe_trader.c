@@ -77,7 +77,12 @@ int main(int argc, char ** argv) {
 
     s.sa_sigaction = signal_handler;
     signal(SIGUSR1, signal_h);
-    
+
+    sigset_t mask;
+    sigset_t old_mask;
+
+    sigemptyset(&mask);
+    sigaddset(&mask, SIGUSR1);    
     /* Collect MARKET OPEN; */
 
     pause();
@@ -98,9 +103,11 @@ int main(int argc, char ** argv) {
     wait for exchange confirmation (ACCEPTED message)
     
     */
+    sigprocmask(SIG_BLOCK, &mask, &old_mask);
+
 
     while(1) {
-        pause();
+        sigsuspend(&old_mask);
 
         read_data(fd_read, buffer);
         
