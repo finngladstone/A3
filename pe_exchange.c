@@ -1,13 +1,6 @@
 #include "pe_exchange.h"
 
-/** 
- * Open fd for products list 
- * Initialise LL for products using Richard's template
- * Output status message
- * Need to call list_free() upon endgame!
- */
-
-//global
+/** Signal handling - queue implementation */
 
 typedef struct {
     int signum;
@@ -15,8 +8,8 @@ typedef struct {
     void *context;
 } queued_signal;
 
-volatile queued_signal signal_queue[MAX_SIGNALS];
-volatile sig_atomic_t queue_size = 0;
+volatile queued_signal signal_queue[MAX_SIGNALS]; // array of queued signals
+volatile sig_atomic_t queue_size = 0; // global number of queued sigs
 
 void signal_handler_read(int s, siginfo_t* sinfo, void * context) {
     if (queue_size < MAX_SIGNALS) {
@@ -166,15 +159,11 @@ void check_match(product * p, int * fees) {
         } else {
             list_delete_recursive(&p->sell_orders, to_delete[i]);
         }
-
     }
-
     return;
-    
 }
 
 void parse_command(trader * t, char * command, list_node * product_head, trader * traders, int n, int time, int * fees) {
-    // verbose
     printf("%s [T%d] Parsing command: <%s>\n", LOG_PREFIX, t->id, command);
 
     int order_id;
@@ -184,27 +173,23 @@ void parse_command(trader * t, char * command, list_node * product_head, trader 
     char word[CMD_LEN];
 
     if (id_command(command, word) == 0) {
-        // printf("%s Invalid command: <%s>\n", LOG_PREFIX, command);
         SEND_STATUS(t, -1, INVALID);
         return;
     }
 
     if (strcmp(word, "BUY") == 0) {
         if (sscanf(command, "BUY %i %s %i %i", &order_id, product_name, &quantity, &unit_price) != 4) {
-			// printf("%s Invalid command format: <%s>\n", LOG_PREFIX , command); 
             SEND_STATUS(t, -1, INVALID);
 			return;
         }
 
         if (order_id != t->next_order_id) {
-			// printf("%s Order ID %i invalid\n", LOG_PREFIX, order_id);
             SEND_STATUS(t, -1, INVALID);
 			return;
         }
 
         list_node * l = list_find(product_head, product_name);
         if (l == NULL) {
-			// printf("%s Invalid product name: <%s>\n", LOG_PREFIX ,product_name);
             SEND_STATUS(t, -1, INVALID);
 			return;
         }
@@ -212,13 +197,11 @@ void parse_command(trader * t, char * command, list_node * product_head, trader 
         product * p = l->data.product;
 
         if (quantity < 1 || quantity > 999999) {
-			// printf("%s Invalid quantity: <%i>\n", LOG_PREFIX, quantity);
             SEND_STATUS(t, -1, INVALID);
 			return;
         }
 
         if (unit_price < 1 || unit_price > 999999) {
-			// printf("%s Invalid price <$%i>\n", LOG_PREFIX, unit_price);
             SEND_STATUS(t, -1, INVALID);
 			return;
         }
@@ -264,20 +247,17 @@ void parse_command(trader * t, char * command, list_node * product_head, trader 
 
     else if (strcmp(word, "SELL") == 0) {
         if (sscanf(command, "SELL %i %s %i %i", &order_id, product_name, &quantity, &unit_price) != 4) {
-			// printf("%s Invalid command format: <%s>\n", LOG_PREFIX , command); 
             SEND_STATUS(t, -1, INVALID);
 			return;
         }
 
         if (order_id != t->next_order_id) {
-			// printf("%s Order ID %i invalid\n", LOG_PREFIX, order_id);
             SEND_STATUS(t, -1, INVALID);
 			return;
         }
 
         list_node * l = list_find(product_head, product_name);
         if (l == NULL) {
-            // printf("%s Invalid product name: <%s>\n", LOG_PREFIX ,product_name);
 			SEND_STATUS(t, -1, INVALID);
 			return;
 
@@ -285,13 +265,11 @@ void parse_command(trader * t, char * command, list_node * product_head, trader 
         product * p = (product *)l->data.product;
 
         if (quantity < 1 || quantity > 999999) {
-			// printf("%s Invalid quantity: <%i>\n", LOG_PREFIX, quantity);
             SEND_STATUS(t, -1, INVALID);
 			return;
         }
 
         if (unit_price < 1 || unit_price > 999999) {
-			// printf("%s Invalid price <$%i>\n", LOG_PREFIX, unit_price);
             SEND_STATUS(t, -1, INVALID);
 			return;
         }
@@ -328,27 +306,22 @@ void parse_command(trader * t, char * command, list_node * product_head, trader 
     else if (strcmp(word, "AMEND") == 0) {
 
         if (sscanf(command, "AMEND %i %i %i", &order_id, &quantity, &unit_price) != 3) {
-            // printf("%s Invalid command format: <%s>\n", LOG_PREFIX , command); 
 			SEND_STATUS(t, -1, INVALID);
 			return;
         }   
 
         if (quantity < 1 || quantity > 999999) {
-			// printf("%s Invalid quantity: <%i>\n", LOG_PREFIX, quantity);
             SEND_STATUS(t, -1, INVALID);
 			return;
         }
 
         if (unit_price < 1 || unit_price > 999999) {
-			// printf("%s Invalid price <$%i>\n", LOG_PREFIX, unit_price);
             SEND_STATUS(t, -1, INVALID);
 			return;
         }
 
-        //////////
         order * to_amend = find_trader_order(t, order_id);
         if (to_amend == NULL) {
-            // printf("Failed to find order ID %i\n", order_id);
             SEND_STATUS(t, -1, INVALID);
             return;
         }
@@ -385,19 +358,16 @@ void parse_command(trader * t, char * command, list_node * product_head, trader 
 
     else if (strcmp(word, "CANCEL") == 0) {
         if (sscanf(command, "CANCEL %i", &order_id) != 1) {
-            // printf("%s Invalid command format: <%s>\n", LOG_PREFIX , command); 
 			SEND_STATUS(t, -1, INVALID);
 			return;
         }
 
         list_node * to_cancel = find_order_listnode(t, order_id);
         if (to_cancel == NULL) {
-			// printf("%s Order ID %i invalid\n", LOG_PREFIX, order_id);
             SEND_STATUS(t, -1, INVALID);
 			return;
         }
 
-        //update node to cancelled
         order * o = to_cancel->data.order;
         o->quantity = 0;
         o->unit_cost = 0;
@@ -422,186 +392,9 @@ void parse_command(trader * t, char * command, list_node * product_head, trader 
         spx_report(product_head, traders, n);
 
     } else {
-        // printf("%s Invalid command: <%s>\n", LOG_PREFIX, command);
         SEND_STATUS(t, -1, INVALID);
         return;
     }
-}
-
-list_node* init_products(const char * filename) {
-
-    list_node* head = NULL;  
-    FILE * myfile;
-    if ((myfile = fopen(filename, "r")) == NULL) {
-        perror("Error opening product file");
-        exit(1);
-    }
-
-    int n;
-    if (fscanf(myfile, "%d\n", &n) != 1) {
-        perror("Failed to read number of products");
-        exit(2);
-    }
-
-    char buffer[BUFFER_LEN] = {0};
-
-    int i;
-    for (i = 0; i < n; i++) {
-        fgets(buffer, BUFFER_LEN, myfile);
-        buffer[strlen(buffer)-1] = '\0';
-
-        product * p = calloc(1, sizeof(product));
-        strcpy(p->name, buffer);
-        p->buy_orders = NULL;
-        p->sell_orders = NULL;
-
-        list_add(&head, p, PRODUCT);
-    }
-
-    printf("%s Trading %d products: ", LOG_PREFIX, i);
-
-    list_node* c = head;
-    while(c){
-        if (c->next == NULL)
-            printf("%s\n", c->data.product->name);
-        else   
-            printf("%s ", c->data.product->name);
-        
-        c = c->next;
-    }
-
-    fclose(myfile);
-    return head;
-}
-
-struct trader* get_traders(int argc, char const *argv[], list_node * product_ll) {
-    struct trader * traders = malloc((argc - 2) * sizeof(struct trader));
-
-    for (int i = 2; i < argc; i++) {
-        traders[i-2].id = i-2;
-        strcpy(traders[i-2].path, argv[i]);
-        
-        traders[i-2].next_order_id = 0;
-        traders[i-2].orders = NULL;
-		traders[i-2].positions = NULL;
-
-        traders[i-2].online = 0;
-
-        list_node * product_node = product_ll;
-        while(product_node != NULL) {
-            position * p = malloc(sizeof(position));
-            p->broker = &traders[i-2];
-            p->item = product_node->data.product;
-            p->value = 0;
-            p->quantity = 0;
-
-            list_add(&traders[i-2].positions, p, POSITION);
-            product_node = product_node->next;
-        }
-    }
-
-    return traders;
-}
-
-void launch(struct trader * t) {
-    printf("%s Starting trader %d (%s)\n", LOG_PREFIX, t->id, t->path);
-
-    pid_t pid;
-
-    pid = fork();
-    if (pid == -1) {
-        perror("Fork() in init_traders failed");
-        exit(2);
-    }
-
-    if (pid == 0) { // child
-        //DEBUG
-
-        // THIS WILL SHIT ON >9 traders
-        char id = t->id + '0'; 
-
-        char * child_args[] = {t->path, &id, NULL};
-
-		// dup2(STDOUT_FILENO, STDOUT_FILENO);
-        execv(child_args[0], child_args);
-
-        perror("execv");
-        exit(2);
-
-    } else {
-        t->pid = pid;
-        t->online = 1;
-    }
-
-    return;
-}
-
-void init_traders(struct trader * traders, int n) {  
-    char fifo_path_trader[PATH_LEN] = {0};
-    char fifo_path_exchange[PATH_LEN] = {0};
-    
-    int trader_id;
-
-    for (int i = 0; i < n; i++) {
-
-        /* Create named pipes */
-
-        trader_id = traders[i].id;
-
-        snprintf(fifo_path_exchange, PATH_LEN, FIFO_EXCHANGE, trader_id);
-        snprintf(fifo_path_trader, PATH_LEN, FIFO_TRADER, trader_id);
-
-        if (access(fifo_path_exchange, F_OK) == -1) {
-            if (mkfifo(fifo_path_exchange, 0666) == -1) { 
-                perror("Exchange mkfifo() failed");
-                exit(2);
-            }
-        }
-
-        printf("%s Created FIFO %s\n", LOG_PREFIX, fifo_path_exchange);        
-
-        if (access(fifo_path_trader, F_OK) == -1) {
-            if (mkfifo(fifo_path_trader, 0666) == -1) {
-                perror("Trader mkfifo() failed");
-                exit(2);
-            }
-        }
-
-        printf("%s Created FIFO %s\n", LOG_PREFIX, fifo_path_trader);
-
-        /* Execute child binary */ 
-
-        launch(&traders[i]);
-
-        /* Connect to pipes */
-
-        int outgoing_fd = open(fifo_path_exchange, O_WRONLY);
-        fcntl(outgoing_fd, F_SETFL, O_NONBLOCK);
-
-        if (outgoing_fd == -1) {
-            perror("Open exchange FIFO");
-            exit(2);
-        }
-
-        printf("%s Connected to %s\n", LOG_PREFIX, fifo_path_exchange);
-
-        int incoming_fd = open(fifo_path_trader, O_RDONLY);
-        fcntl(incoming_fd, F_SETFL, O_NONBLOCK);
-
-        if (incoming_fd == -1) {
-            perror("Open trader FIFO");
-            exit(2);
-        } 
-
-        printf("%s Connected to %s\n", LOG_PREFIX, fifo_path_trader);
-        traders[trader_id].incoming_fd = incoming_fd;
-        traders[trader_id].outgoing_fd = outgoing_fd;
-    }
-}
-
-void close_fifos(struct trader * t) {
-    close(t->incoming_fd);
-    close(t->outgoing_fd);
 }
 
 /** Main
@@ -623,18 +416,10 @@ int main(int argc, char const *argv[])
     int time = 0;
 
     printf("%s Starting\n", LOG_PREFIX); 
-       
-   /* Start-up 
-    * 1. Read product file 
-    * 2. Create named pipes for each trader (>= n)
-    * 3. Launch trader as child process, assign trader ID starting from 0
-    * 4. After launching each binary, exchange and trader connect to FIFO
-    * 5. setup signals 
-    * 6. send MARKET_OPEN
-    */
 
-    list_node* products_ll = init_products(argv[1]); // get products
-    struct trader * traders = get_traders(argc, argv, products_ll); // get list of traders
+    //init products and traders data structures
+    list_node* products_ll = init_products(argv[1]);
+    struct trader * traders = get_traders(argc, argv, products_ll);
 
     /* Signal handling */
 
@@ -658,20 +443,10 @@ int main(int argc, char const *argv[])
         exit(2);
     }
 
-    /** init traders */
-    init_traders(traders, argc - 2); // create trader pipes, fork, fifo connects
+    // create trader pipes, fork, fifo connects
+    init_traders(traders, argc - 2); 
    
-
     SEND_MARKET_OPEN(traders, argc-2);
-
-    /** Main loop
-     * 1) Wait for signal 
-     * 2) Get trader PID
-     * 2) Use epoll to check that trader has actually written to pipe
-     * 3) Extract data
-     * 4) parse command
-     * 5) Update and communicate back to traders
-     */
 
     sigset_t allset, oldset;
     sigfillset(&allset);

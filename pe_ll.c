@@ -304,3 +304,41 @@ list_node* list_get_head(list_node* node) {
 
     return cursor;
 }
+
+/** 
+ * 
+ * Data queries on LLs 
+ * 
+*/
+
+list_node * find_product_order_listnode(product * p, order * o) {
+    list_node * cursor;
+    if (o->type == BUY)
+        cursor = p->buy_orders;
+    else 
+        cursor = p->sell_orders;
+
+    while (cursor != NULL) {
+        if (cursor->data.order->order_id == o->order_id) {
+            return cursor;
+        }
+
+        cursor = cursor->next;
+    }
+
+    return NULL;
+}
+
+list_node * find_order_listnode(trader * t, int id) {
+    list_node* cursor = t->orders;
+
+    while(cursor != NULL) {
+        if (cursor->data.order->order_id == id) {
+            return cursor;
+        }
+
+        cursor = cursor->next;
+    }
+
+    return NULL;
+}

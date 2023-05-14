@@ -1,76 +1,194 @@
 #include "pe_exchange.h"
 
-trader * find_trader(int pid, struct trader * traders, int n) {
+/**
+ * This file contains a myriad of helper functions that are
+ * not associated with the linked list framework
+ * 
+ */
+
+/** Data structures initialisation */
+
+list_node* init_products(const char * filename) {
+
+    list_node* head = NULL;  
+    FILE * myfile;
+    if ((myfile = fopen(filename, "r")) == NULL) {
+        perror("Error opening product file");
+        exit(1);
+    }
+
+    int n;
+    if (fscanf(myfile, "%d\n", &n) != 1) {
+        perror("Failed to read number of products");
+        exit(2);
+    }
+
+    char buffer[BUFFER_LEN] = {0};
+
+    int i;
+    for (i = 0; i < n; i++) {
+        fgets(buffer, BUFFER_LEN, myfile);
+        buffer[strlen(buffer)-1] = '\0';
+
+        product * p = calloc(1, sizeof(product));
+        strcpy(p->name, buffer);
+        p->buy_orders = NULL;
+        p->sell_orders = NULL;
+
+        list_add(&head, p, PRODUCT);
+    }
+
+    printf("%s Trading %d products: ", LOG_PREFIX, i);
+
+    list_node* c = head;
+    while(c){
+        if (c->next == NULL)
+            printf("%s\n", c->data.product->name);
+        else   
+            printf("%s ", c->data.product->name);
+        
+        c = c->next;
+    }
+
+    fclose(myfile);
+    return head;
+}
+
+struct trader* get_traders(int argc, char const *argv[], list_node * product_ll) {
+    struct trader * traders = malloc((argc - 2) * sizeof(struct trader));
+
+    for (int i = 2; i < argc; i++) {
+        traders[i-2].id = i-2;
+        strcpy(traders[i-2].path, argv[i]);
+        
+        traders[i-2].next_order_id = 0;
+        traders[i-2].orders = NULL;
+		traders[i-2].positions = NULL;
+
+        traders[i-2].online = 0;
+
+        list_node * product_node = product_ll;
+        while(product_node != NULL) {
+            position * p = malloc(sizeof(position));
+            p->broker = &traders[i-2];
+            p->item = product_node->data.product;
+            p->value = 0;
+            p->quantity = 0;
+
+            list_add(&traders[i-2].positions, p, POSITION);
+            product_node = product_node->next;
+        }
+    }
+
+    return traders;
+}
+
+void launch(struct trader * t) {
+    printf("%s Starting trader %d (%s)\n", LOG_PREFIX, t->id, t->path);
+
+    pid_t pid;
+
+    pid = fork();
+    if (pid == -1) {
+        perror("Fork() in init_traders failed");
+        exit(2);
+    }
+
+    if (pid == 0) { // child
+        //DEBUG
+
+        // THIS WILL SHIT ON >9 traders
+        char id = t->id + '0'; 
+
+        char * child_args[] = {t->path, &id, NULL};
+
+		// dup2(STDOUT_FILENO, STDOUT_FILENO);
+        execv(child_args[0], child_args);
+
+        perror("execv");
+        exit(2);
+
+    } else {
+        t->pid = pid;
+        t->online = 1;
+    }
+
+    return;
+}
+
+void init_traders(struct trader * traders, int n) {  
+    char fifo_path_trader[PATH_LEN] = {0};
+    char fifo_path_exchange[PATH_LEN] = {0};
+    
+    int trader_id;
+
     for (int i = 0; i < n; i++) {
-        if (traders[i].pid == pid)
-            return &traders[i];
-    }
 
-    return NULL;
-}
+        /* Create named pipes */
 
-int id_command(char * src, char * dest) {
-    
-    int len = strcspn(src, " ");
+        trader_id = traders[i].id;
 
-    if (len > 6) 
-        return 0;
+        snprintf(fifo_path_exchange, PATH_LEN, FIFO_EXCHANGE, trader_id);
+        snprintf(fifo_path_trader, PATH_LEN, FIFO_TRADER, trader_id);
 
-    strncpy(dest, src, len);
-    dest[len] = '\0';
-
-    return 1;
-}
-
-list_node * find_product_order_listnode(product * p, order * o) {
-    list_node * cursor;
-    if (o->type == BUY)
-        cursor = p->buy_orders;
-    else 
-        cursor = p->sell_orders;
-
-    while (cursor != NULL) {
-        if (cursor->data.order->order_id == o->order_id) {
-            return cursor;
+        if (access(fifo_path_exchange, F_OK) == -1) {
+            if (mkfifo(fifo_path_exchange, 0666) == -1) { 
+                perror("Exchange mkfifo() failed");
+                exit(2);
+            }
         }
 
-        cursor = cursor->next;
-    }
+        printf("%s Created FIFO %s\n", LOG_PREFIX, fifo_path_exchange);        
 
-    return NULL;
-}
-
-order * find_trader_order(trader * t, int order_id) {
-    list_node* cursor = t->orders;
-    
-    while(cursor) {
-        if (cursor->data.order->order_id == order_id) {
-            return cursor->data.order;
+        if (access(fifo_path_trader, F_OK) == -1) {
+            if (mkfifo(fifo_path_trader, 0666) == -1) {
+                perror("Trader mkfifo() failed");
+                exit(2);
+            }
         }
 
-        cursor = cursor->next;
-    }
+        printf("%s Created FIFO %s\n", LOG_PREFIX, fifo_path_trader);
 
-    return NULL;
-}
+        /* Execute child binary */ 
 
-list_node * find_order_listnode(trader * t, int id) {
-    list_node* cursor = t->orders;
+        launch(&traders[i]);
 
-    while(cursor != NULL) {
-        if (cursor->data.order->order_id == id) {
-            return cursor;
+        /* Connect to pipes */
+
+        int outgoing_fd = open(fifo_path_exchange, O_WRONLY);
+        fcntl(outgoing_fd, F_SETFL, O_NONBLOCK);
+
+        if (outgoing_fd == -1) {
+            perror("Open exchange FIFO");
+            exit(2);
         }
 
-        cursor = cursor->next;
-    }
+        printf("%s Connected to %s\n", LOG_PREFIX, fifo_path_exchange);
 
-    return NULL;
+        int incoming_fd = open(fifo_path_trader, O_RDONLY);
+        fcntl(incoming_fd, F_SETFL, O_NONBLOCK);
+
+        if (incoming_fd == -1) {
+            perror("Open trader FIFO");
+            exit(2);
+        } 
+
+        printf("%s Connected to %s\n", LOG_PREFIX, fifo_path_trader);
+        traders[trader_id].incoming_fd = incoming_fd;
+        traders[trader_id].outgoing_fd = outgoing_fd;
+    }
 }
 
+void close_fifos(struct trader * t) {
+    close(t->incoming_fd);
+    close(t->outgoing_fd);
+}
 
-
-/** Comms framework */
+/**
+ * 
+ * FRAMEWORK FOR DATA TRANSFER
+ * 
+ */
 
 void send_data(int fd, char * message) {
     if (write(fd, message, strlen(message)) == -1) {
@@ -95,7 +213,14 @@ void receive_data(int fd, char * buffer) {
     buffer[n_read] = '\0';
 }
 
-/** Comms commands  */
+
+/**
+ * 
+ * 
+ * SENDING DATA TO TRADERS
+ * 
+ * 
+ */
 
 void SEND_STATUS(trader * t, int id, statuses s) {
     
@@ -166,65 +291,12 @@ void SEND_FILL(trader * t, order * o, int quantity) {
     kill(t->pid, SIGUSR1);
 }
 
-position * find_position(trader * t, product * p) {
-    list_node* cursor = t->positions;
-
-    if (cursor == NULL) return NULL;
-
-    while (cursor) {
-        if (&cursor->data.position->item->name == &p->name)
-            return cursor->data.position;  
-
-        cursor = cursor->next; 
-    }
-
-    return NULL;
-}
-
-int number_of_live_traders(trader * traders, int n) {
-    int c = 0;
-    
-    for (int i = 0; i < n; i++) {
-        c+= traders[i].online;
-    }
-
-    return c;
-}
-
-int number_of_equal_orders(list_node * h, int c) {
-    int i = 0;
-
-    list_node * cursor = h;
-    while (cursor != NULL) {
-        if (cursor->data.order->unit_cost == c)
-            i++;
-
-        cursor = cursor->next;
-    }
-
-    return i;
-}
-
-
-int get_levels(list_node * order_head) {
-    int count = 0;
-
-    list_node * cursor = order_head;
-    while (cursor != NULL) {
-
-        if (cursor->prev == NULL)
-            count++;
-        else if (cursor->prev->data.order->unit_cost == cursor->data.order->unit_cost) {
-            ; // do nothing
-        } else {
-            count++;
-        }
-
-        cursor = cursor->next;
-    }
-
-    return count;
-}
+/** 
+ * 
+ * 
+ * REPORTING DATA IN PEX
+ * 
+ */
 
 void print_aggregate_orders(product * p) { 
     list_node * cursor;
@@ -325,4 +397,107 @@ void spx_report(list_node * product_ll, trader * traders, int n_traders) {
     print_positions(traders, n_traders);
 }
 
- 
+/**
+ * 
+ * 
+ * DATA QUERIES
+ * 
+ * 
+ */
+
+position * find_position(trader * t, product * p) {
+    list_node* cursor = t->positions;
+
+    if (cursor == NULL) return NULL;
+
+    while (cursor) {
+        if (&cursor->data.position->item->name == &p->name)
+            return cursor->data.position;  
+
+        cursor = cursor->next; 
+    }
+
+    return NULL;
+}
+
+int number_of_live_traders(trader * traders, int n) {
+    int c = 0;
+    
+    for (int i = 0; i < n; i++) {
+        c+= traders[i].online;
+    }
+
+    return c;
+}
+
+int number_of_equal_orders(list_node * h, int c) {
+    int i = 0;
+
+    list_node * cursor = h;
+    while (cursor != NULL) {
+        if (cursor->data.order->unit_cost == c)
+            i++;
+
+        cursor = cursor->next;
+    }
+
+    return i;
+}
+
+
+int get_levels(list_node * order_head) {
+    int count = 0;
+
+    list_node * cursor = order_head;
+    while (cursor != NULL) {
+
+        if (cursor->prev == NULL)
+            count++;
+        else if (cursor->prev->data.order->unit_cost == cursor->data.order->unit_cost) {
+            ; // do nothing
+        } else {
+            count++;
+        }
+
+        cursor = cursor->next;
+    }
+
+    return count;
+} 
+
+
+trader * find_trader(int pid, struct trader * traders, int n) {
+    for (int i = 0; i < n; i++) {
+        if (traders[i].pid == pid)
+            return &traders[i];
+    }
+
+    return NULL;
+}
+
+int id_command(char * src, char * dest) {
+    
+    int len = strcspn(src, " ");
+
+    if (len > 6) 
+        return 0;
+
+    strncpy(dest, src, len);
+    dest[len] = '\0';
+
+    return 1;
+}
+
+order * find_trader_order(trader * t, int order_id) {
+    list_node* cursor = t->orders;
+    
+    while(cursor) {
+        if (cursor->data.order->order_id == order_id) {
+            return cursor->data.order;
+        }
+
+        cursor = cursor->next;
+    }
+
+    return NULL;
+}

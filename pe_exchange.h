@@ -112,6 +112,13 @@ typedef struct list_node {
     data_type type;
 } list_node;
 
+typedef enum {
+    ACCEPTED,
+    AMENDED,
+    CANCELLED,
+    INVALID
+} statuses;
+
 /** LINKED LIST BACKEND  */
 
 list_node* list_init(void* data, data_type type);
@@ -130,15 +137,8 @@ list_node * find_product_order_listnode(product * p, order * o);
 
 void list_free_node(list_node* head);
 void list_delete_node_only(list_node** h, list_node* n);
-/** Helper functions */
 
-typedef enum {
-    ACCEPTED,
-    AMENDED,
-    CANCELLED,
-    INVALID
-} statuses;
-
+/** DATA COMMANDS */
 
 trader * find_trader(int pid, struct trader * traders, int n);
 int id_command(char * src, char * dest);
@@ -150,12 +150,23 @@ int number_of_live_traders(trader * traders, int n);
 void print_positions(trader * traders, int n);
 void print_orderbook(list_node * product_ll);
 void print_aggregate_orders(product * p);
+int number_of_equal_orders(list_node * h, int c);
+int get_levels(list_node * order_head);
+
+/** SETUP COMMANDS */
+list_node* init_products(const char * filename);
+struct trader* get_traders(int argc, char const *argv[], list_node * product_ll);
+void init_traders(struct trader * traders, int n);
+void launch(struct trader * t);
+void close_fifos(struct trader * t);
 
 
-/** Comms */
+/** FIFO COMMS FRAMEWORK */
 
 void send_data(int fd, char * message);
 void receive_data(int fd, char * buffer);
+
+/** REPORTING TO TRADERS */
 
 void SEND_STATUS(trader * t, int id, statuses s);
 void SEND_MARKET_OPEN(trader * traders, int n);
