@@ -27,17 +27,16 @@ void read_data(int fd, char * buffer) {
     return;
 }
 
-void parse_order(struct market_data * storage, char * input) {
+void parse_order(struct market_data * storage, char * input, int id) {
     int n_read;
-    n_read = sscanf(input, "MARKET SELL %127s %i %i;", storage->name, &storage->quantity, &storage->price);
+    int invalid_data = 0;
+    n_read = sscanf(input, "MARKET SELL %127s %i %i;%n", storage->name, &storage->quantity, &storage->price, &invalid_data);
 
-    if (n_read != 3) {
-        printf("parse_order fried\n");
+    if (n_read != 3 || input[invalid_data] != '\0') {
+        printf("T[%i] Received invalid command: %s\n", id, input);
         exit(2);
     }
 }
-
-// int place_order() {}
 
 int main(int argc, char ** argv) {
     if (argc < 2) {
@@ -109,7 +108,7 @@ int main(int argc, char ** argv) {
             continue;
 
         struct market_data storage; 
-        parse_order(&storage, buffer);
+        parse_order(&storage, buffer, self_id);
 
         if (storage.quantity >= 1000) {
             break;
