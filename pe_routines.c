@@ -47,6 +47,8 @@ order * find_trader_order(trader * t, int order_id) {
         if (cursor->data.order->order_id == order_id) {
             return cursor->data.order;
         }
+
+        cursor = cursor->next;
     }
 
     return NULL;

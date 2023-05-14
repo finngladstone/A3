@@ -326,6 +326,7 @@ void parse_command(trader * t, char * command, list_node * product_head, trader 
     }
 
     else if (strcmp(word, "AMEND") == 0) {
+
         if (sscanf(command, "AMEND %i %i %i", &order_id, &quantity, &unit_price) != 3) {
             // printf("%s Invalid command format: <%s>\n", LOG_PREFIX , command); 
 			SEND_STATUS(t, -1, INVALID);
@@ -344,12 +345,7 @@ void parse_command(trader * t, char * command, list_node * product_head, trader 
 			return;
         }
 
-        ///////////////////////////////////////////////////////////////////////////// !!!!! need to edit product order too
-        ///////////////////////////////////////////////////////////////////////////// maybe not 
-        ///////////////////////////////////////////////////////////////////////////// but probably in cancel()
-        /////////////////////////////////////////////////////////////////////////////
-
-
+        //////////
         order * to_amend = find_trader_order(t, order_id);
         if (to_amend == NULL) {
             // printf("Failed to find order ID %i\n", order_id);
@@ -362,6 +358,18 @@ void parse_command(trader * t, char * command, list_node * product_head, trader 
         to_amend->time = time;
         to_amend->quantity = quantity;
         to_amend->unit_cost = unit_price;
+
+        // update nodes - delete and then re-add to product LL
+
+        list_node * to_amend_ll = find_product_order_listnode(to_amend->product, to_amend);
+
+        if (to_amend->type == BUY) {
+            list_delete_node_only(&to_amend->product->buy_orders, to_amend_ll);
+            to_amend->product->buy_orders = list_add_sorted_desc(to_amend->product->buy_orders, to_amend, ORDER);
+        } else {
+            list_delete_node_only(&to_amend->product->sell_orders, to_amend_ll);
+            to_amend->product->sell_orders = list_add_sorted_asc(to_amend->product->sell_orders, to_amend, ORDER);
+        }
 
         //SEND_ACCEPTED
         SEND_STATUS(t, order_id, AMENDED);
