@@ -381,7 +381,7 @@ void print_positions(trader * traders, int n) {
         while (cursor != NULL) {
             position * p = cursor->data.position;
 
-            printf("%s %i ($%i)", p->item->name, p->quantity, p->value);
+            printf("%s %i ($%lli)", p->item->name, p->quantity, p->value);
             
             if (cursor->next != NULL)
                 printf(", ");

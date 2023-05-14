@@ -39,7 +39,7 @@ void signal_handler_disc(int s, siginfo_t* sinfo, void * context) {
  * 5) 
  */
 
-void check_match(product * p, int * fees) {
+void check_match(product * p, long long int * fees) {
 
     list_node* to_delete[MAX_DELETE] = {0}; // product list nodes
     int c = 0;
@@ -54,7 +54,7 @@ void check_match(product * p, int * fees) {
     position * buyer_pos;
 
     int quantity_sold;
-    int value;
+    long long int value;
 
     while (sell_cursor != NULL && buy_cursor != NULL) {
 
@@ -118,21 +118,21 @@ void check_match(product * p, int * fees) {
 
         if (sell->time < buy->time) {
 
-            value = quantity_sold * sell->unit_cost;
+            value = (long long int) quantity_sold * sell->unit_cost;
             fees_paid = round(value * multiplier);
 
             buyer_pos->value -= fees_paid;
 
-            printf("%s Match: Order %i [T%i], New Order %i [T%i], value: $%i, fee: $%i.\n",
-                LOG_PREFIX, sell->order_id, sell->broker->id, buy->order_id, buy->broker->id, value, (int)fees_paid);
+            printf("%s Match: Order %i [T%i], New Order %i [T%i], value: $%lli, fee: $%lli.\n",
+                LOG_PREFIX, sell->order_id, sell->broker->id, buy->order_id, buy->broker->id, value, (long long int)fees_paid);
         } else {
             value = quantity_sold * buy->unit_cost;
             fees_paid = round(value * multiplier);
 
             seller_pos->value -= fees_paid;
 
-            printf("%s Match: Order %i [T%i], New Order %i [T%i], value: $%i, fee: $%i.\n",
-                LOG_PREFIX, buy->order_id, buy->broker->id, sell->order_id, sell->broker->id, value, (int)fees_paid);
+            printf("%s Match: Order %i [T%i], New Order %i [T%i], value: $%lli, fee: $%lli.\n",
+                LOG_PREFIX, buy->order_id, buy->broker->id, sell->order_id, sell->broker->id, value, (long long int)fees_paid);
         }
 
         seller_pos->quantity -= quantity_sold;
@@ -144,7 +144,7 @@ void check_match(product * p, int * fees) {
         SEND_FILL(sell->broker, sell, quantity_sold);
         SEND_FILL(buy->broker, buy, quantity_sold);
 
-        *fees += (int) fees_paid;
+        *fees += (long long int) fees_paid;
 
     }
 
@@ -163,7 +163,7 @@ void check_match(product * p, int * fees) {
     return;
 }
 
-void parse_command(trader * t, char * command, list_node * product_head, trader * traders, int n, int time, int * fees) {
+void parse_command(trader * t, char * command, list_node * product_head, trader * traders, int n, int time, long long int * fees) {
     printf("%s [T%d] Parsing command: <%s>\n", LOG_PREFIX, t->id, command);
 
     int order_id;
@@ -412,7 +412,7 @@ int main(int argc, char const *argv[])
 
     char buffer[BUFFER_LEN];
     
-    int fees = 0;
+    long long int fees = 0;
     int time = 0;
 
     printf("%s Starting\n", LOG_PREFIX); 
@@ -519,7 +519,7 @@ int main(int argc, char const *argv[])
     */
 
     printf("%s Trading completed\n", LOG_PREFIX);
-    printf("%s Exchange fees collected: $%i\n", LOG_PREFIX, fees);
+    printf("%s Exchange fees collected: $%lli\n", LOG_PREFIX, fees);
 
     /* Close fds */
 
