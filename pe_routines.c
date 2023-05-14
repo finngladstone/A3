@@ -451,9 +451,13 @@ int get_levels(list_node * order_head) {
     list_node * cursor = order_head;
     while (cursor != NULL) {
 
-        if (cursor->prev == NULL)
+        if (cursor->prev == NULL) {
             count++;
-        else if (cursor->prev->data.order->unit_cost == cursor->data.order->unit_cost) {
+            cursor=cursor->next;
+            continue;
+        }
+
+        if (cursor->prev->data.order->unit_cost == cursor->data.order->unit_cost) {
             ; // do nothing
         } else {
             count++;

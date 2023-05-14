@@ -37,7 +37,7 @@ list_node * list_next(list_node * n) {
     return n->next;
 }
 
-list_node * list_prev(list_node * n) { // Add this function
+list_node * list_prev(list_node * n) {
     if (n == NULL) return NULL;
     return n->prev;
 }
@@ -53,7 +53,7 @@ void list_add(list_node** h, void* data, data_type type) {
         cursor = cursor->next;
 
     cursor->next = list_init(data, type);
-    cursor->next->prev = cursor; // Add this line
+    cursor->next->prev = cursor;
 }
 
 
@@ -97,14 +97,14 @@ list_node* list_add_sorted_desc(list_node * head, void* data, data_type type) {
         return new;
     }
 
-    else if (head->data.order->unit_cost < new_c) {  // Change the comparison from >= to <
+    else if (head->data.order->unit_cost < new_c) {
         new->next = head;
         new->next->prev = new;
         return new;
     } else {
         list_node * cursor = head;
         while (cursor->next != NULL && 
-            cursor->next->data.order->unit_cost >= new_c)  // Change the comparison from < to >=
+            cursor->next->data.order->unit_cost >= new_c)
         {
             cursor = cursor->next;
         }
@@ -117,7 +117,7 @@ list_node* list_add_sorted_desc(list_node * head, void* data, data_type type) {
         new->prev = cursor;
     }
     
-    return head;  // Remember to return the head
+    return head; 
 }
 
 
@@ -146,7 +146,7 @@ void list_delete_recursive(list_node** h, list_node* n) {
         free(n);
         
         
-        if (*h) (*h)->prev = NULL; // Add this line
+        if (*h) (*h)->prev = NULL;
         return;
     }
     while (cursor->next != n){
@@ -154,7 +154,7 @@ void list_delete_recursive(list_node** h, list_node* n) {
         cursor = cursor->next;
     }
     list_node* future = cursor->next->next;
-    if (future) future->prev = cursor; // Add this line
+    if (future) future->prev = cursor;
 
     list_node * tmp = cursor->next;
     switch(tmp->type) {
@@ -184,7 +184,7 @@ void list_delete_node_only(list_node** h, list_node* n) {
     if (*h == n) {
         *h = (*h)->next;
         if (*h) (*h)->prev = NULL;
-        free(n);  // Only free the node itself, not the data it contains
+        free(n); 
         return;
     }
 
@@ -196,7 +196,7 @@ void list_delete_node_only(list_node** h, list_node* n) {
     list_node* future = cursor->next->next;
     if (future) future->prev = cursor;
 
-    free(cursor->next);  // Only free the node itself, not the data it contains
+    free(cursor->next); 
     cursor->next = future;
 
     return;
@@ -226,10 +226,9 @@ void list_free_recursive(list_node* head) {
         } else if (temp->type == ORDER) {
 
             free(temp->data.order);
-            // free(temp->data.order);
+
         }
 
-        // Free the memory allocated for the list_node
         free(temp);
     }
 }
