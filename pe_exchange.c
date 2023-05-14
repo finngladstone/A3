@@ -184,7 +184,7 @@ void parse_command(trader * t, char * command, list_node * product_head, trader 
     char word[CMD_LEN];
 
     if (id_command(command, word) == 0) {
-        printf("%s Invalid command: <%s>\n", LOG_PREFIX, command);
+        // printf("%s Invalid command: <%s>\n", LOG_PREFIX, command);
         SEND_STATUS(t, -1, INVALID);
         return;
     }
@@ -422,7 +422,7 @@ void parse_command(trader * t, char * command, list_node * product_head, trader 
         spx_report(product_head, traders, n);
 
     } else {
-        printf("%s Invalid command: <%s>\n", LOG_PREFIX, command);
+        // printf("%s Invalid command: <%s>\n", LOG_PREFIX, command);
         SEND_STATUS(t, -1, INVALID);
         return;
     }
